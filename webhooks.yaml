@@ -1,0 +1,236 @@
+openapi: 3.1.0
+info:
+  title: Webhooks
+  description: API endpoints for managing webhooks.
+  version: "1.0.4"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /webhooks:
+    get:
+      summary: List webhooks
+      description: "Retrieves a list of webhooks."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "The maximum number of results to be returned."
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: "The starting position for the returned values."
+          required: false
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Available values: 'created', 'created_asc', 'created_desc'."
+          required: false
+          schema:
+            type: string
+            enum: [created, created_asc, created_desc]
+      responses:
+        "200":
+          description: "A list of webhooks."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Webhook"
+
+    post:
+      summary: Create a webhook
+      description: "Creates a new webhook."
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - topic
+                - url
+              properties:
+                topic:
+                  type: string
+                  description: "The topic of the webhook."
+                url:
+                  type: string
+                  description: "The target URL for the webhook."
+                enabled:
+                  type: boolean
+                  description: "If true, the webhook will fire when the related event occurs."
+      responses:
+        "201":
+          description: "Webhook created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webhook"
+
+  /webhooks/count:
+    get:
+      summary: Count webhooks
+      description: "Retrieves the total count of webhooks."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: topic
+          in: query
+          description: "Only count webhooks with this topic."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The total count of webhooks."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The number of webhooks counted."
+
+  /webhooks/{id}:
+    get:
+      summary: Get a specific webhook
+      description: "Retrieves a webhook by ID."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The webhook details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webhook"
+
+    put:
+      summary: Update a webhook
+      description: "Updates an existing webhook."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                topic:
+                  type: string
+                  description: "The topic of the webhook."
+                url:
+                  type: string
+                  description: "The target URL for the webhook."
+                enabled:
+                  type: boolean
+                  description: "If true, the webhook will fire when the related event occurs."
+      responses:
+        "200":
+          description: "Webhook updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webhook"
+
+    delete:
+      summary: Delete a webhook
+      description: "Deletes an existing webhook."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Webhook deleted successfully."
+
+  /webhooks/{id}/verify:
+    post:
+      summary: Verify a webhook
+      description: "Re-sends the verification request to the webhook's target URL."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: "Verification request re-sent successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "The unique ID for the webhook."
+        createdAt:
+          type: string
+          description: "The date/time that the webhook was created."
+        topic:
+          type: string
+          description: "The topic of the webhook."
+        url:
+          type: string
+          description: "The target URL that the webhook will be sent to."
+        enabled:
+          type: boolean
+          description: "If true, the webhook will fire when the related event occurs."
+        verified:
+          type: boolean
+          description: "If true, the initial verification has passed and the webhook will function as expected."

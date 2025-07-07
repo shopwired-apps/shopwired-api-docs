@@ -1,0 +1,178 @@
+openapi: 3.1.0
+info:
+  title: Business
+  description: API endpoint for retrieving ShopWired account details.
+  version: "1.0.2"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /business:
+    get:
+      summary: Retrieve business details
+      description: "Fetches information about the ShopWired account."
+      operationId: getBusiness
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available options: `payment_methods`, `apps`, `settings`."
+          required: false
+          schema:
+            type: string
+          example: "payment_methods,apps,settings"
+      responses:
+        "200":
+          description: "Business details retrieved successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Business:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the business account."
+        packageId:
+          type: integer
+          description: "ID of the package assigned to the account."
+        name:
+          type: string
+          description: "The business name associated with the account."
+        domain:
+          type: string
+          description: "The primary domain name of the business."
+        themePreviewDomain:
+          type: string
+          description: "The domain used for theme previews."
+        currency:
+          type: string
+          description: "The default currency for the business (e.g., GBP, USD)."
+        currencyDetails:
+          type: object
+          description: "Detailed information about the currency."
+          properties:
+            symbol:
+              type: string
+              description: "Currency symbol."
+            symbolHtml:
+              type: string
+              description: "HTML entity for the currency symbol."
+            symbolPosition:
+              type: string
+              description: "Position of the currency symbol (e.g., before or after amount)."
+        weightUnit:
+          type: string
+          description: "Unit of weight measurement (e.g., kg, lb)."
+        countryCode:
+          type: string
+          description: "Two-letter country code of the business."
+        accountHolder:
+          type: object
+          description: "Details of the account holder."
+          properties:
+            name:
+              type: string
+              description: "Name of the account holder."
+            emailAddress:
+              type: string
+              format: email
+              description: "Email address of the account holder."
+        contactDetails:
+          type: object
+          description: "Business contact details."
+          properties:
+            address:
+              type: string
+              description: "The address of the business."
+            postcode:
+              type: string
+              description: "Postal code of the business."
+            phoneNumber:
+              type: string
+              description: "Contact phone number."
+            emailAddress:
+              type: string
+              format: email
+              description: "Primary email address for the business."
+        active:
+          type: boolean
+          description: "Indicates whether the business account is active."
+        settings:
+          type: object
+          description: "Business settings. Only included if `embed=settings` is used."
+          properties:
+            valueAddedTax:
+              type: boolean
+              description: "Whether VAT is enabled."
+            valueAddedTaxRate:
+              type: number
+              format: float
+              description: "The VAT rate percentage."
+            pricesContainValueAddedTax:
+              type: boolean
+              description: "Whether prices include VAT."
+            wholesaleDelivery:
+              type: boolean
+              description: "Indicates if wholesale delivery is enabled."
+            perBasketLineItemValueAddedTax:
+              type: boolean
+              description: "Whether VAT is applied per basket line item."
+            checkAllShippingCountriesForRates:
+              type: boolean
+              description: "Whether shipping rates are checked for all countries."
+            excludeDiscountsForValueBasedShippingRates:
+              type: boolean
+              description: "Indicates whether discounts are excluded from value-based shipping rates."
+            wholesaleDeliveryCost:
+              type: number
+              format: float
+              description: "The cost of wholesale delivery."
+            wholesaleFreeDeliveryThreshold:
+              type: number
+              format: float
+              description: "The minimum order value for free wholesale delivery."
+            liveThemeVersion:
+              type: integer
+              description: "The current version of the live theme."
+        apps:
+          type: array
+          description: "List of installed apps. Only internal apps are returned, not external-apps using OAuth. Only included if `embed=apps` is used."
+          items:
+            type: string
+        paymentMethods:
+          type: array
+          description: "Payment methods available for the business. Only included if `embed=payment_methods` is used."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "Unique identifier for the payment method."
+              title:
+                type: string
+                description: "Title of the payment method."

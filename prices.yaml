@@ -1,0 +1,95 @@
+openapi: 3.1.0
+info:
+  title: Product Prices
+  description: API endpoints for retrieving and updating product prices.
+  version: "1.1.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /products/prices:
+    post:
+      summary: Update product prices
+      description: "Updates the price and/or sale price for a specified SKU or multiple SKUs (up to 15)."
+      operationId: updatePrices
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PriceUpdate"
+      responses:
+        "200":
+          description: "Prices updated successfully."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PriceUpdateResponse"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    PriceUpdate:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: "The SKU code for the product or product variation. Required when using 'price' or 'salePrice' alone. Should not be used with 'items'."
+        price:
+          type: number
+          format: float
+          description: "The base price of the product."
+        salePrice:
+          type: number
+          format: float
+          description: "The sale price of the product."
+        items:
+          type: array
+          description: "Array of price updates. Should not be used with 'sku', 'price', or 'salePrice'. Maximum of 15 items allowed."
+          maxItems: 15
+          items:
+            type: object
+            properties:
+              sku:
+                type: string
+                description: "The SKU code for the product or product variation."
+              price:
+                type: number
+                format: float
+                description: "The base price of the product."
+              salePrice:
+                type: number
+                format: float
+                description: "The sale price of the product."
+
+    PriceUpdateResponse:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: "The SKU code for the product or product variation."
+        updated:
+          type: boolean
+          description: "Indicates whether the price was updated. If false, the price was unchanged."
+        productId:
+          type: integer
+          description: "The ID of the product associated with the SKU. Present only if 'updated' is true."
+        variation:
+          type: boolean
+          description: "Indicates whether the SKU corresponds to a variation. Present only if 'updated' is true."

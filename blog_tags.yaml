@@ -1,0 +1,248 @@
+openapi: 3.1.0
+info:
+  title: Blog Tags
+  description: API endpoints for managing blog tags through ShopWired.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /blog-tags:
+    get:
+      summary: List blog tags
+      description: "Retrieves a list of blog tags with pagination."
+      operationId: listBlogTags
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of blog tags."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlogTag"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new blog tag
+      description: "Creates a new blog tag."
+      operationId: createBlogTag
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogTagCreate"
+      responses:
+        "201":
+          description: "Blog tag created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogTag"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /blog-tags/count:
+    get:
+      summary: Get total blog tag count
+      description: "Retrieves the total number of blog tags."
+      operationId: getBlogTagCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of blog tags."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of blog tags."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /blog-tags/{id}:
+    get:
+      summary: Get a specific blog tag
+      description: "Retrieves a single blog tag by ID."
+      operationId: getBlogTagById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the blog tag."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The blog tag details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogTag"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Blog tag not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a blog tag
+      description: "Updates an existing blog tag by ID."
+      operationId: updateBlogTag
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the blog tag."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogTagUpdate"
+      responses:
+        "200":
+          description: "Blog tag updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogTag"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Blog tag not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a blog tag
+      description: "Deletes an existing blog tag by ID."
+      operationId: deleteBlogTag
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the blog tag."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Blog tag deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Blog tag not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    BlogTag:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the blog tag."
+        title:
+          type: string
+          description: "The title/name of the blog tag."
+        slug:
+          type: string
+          description: "The URL slug for the blog tag."
+        url:
+          type: string
+          description: "The full URL for the blog tag."
+
+    BlogTagCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: "The title/name of the blog tag."
+        slug:
+          type: string
+          description: "The URL slug for the blog tag (without domain)."
+
+    BlogTagUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: "The title/name of the blog tag."
+        slug:
+          type: string
+          description: "The URL slug for the blog tag (without domain)."

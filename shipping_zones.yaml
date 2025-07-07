@@ -1,0 +1,261 @@
+openapi: 3.1.0
+info:
+  title: Shipping Zones
+  description: API endpoints for managing shipping zones.
+  version: "1.0.3"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /shipping-zones:
+    get:
+      summary: List shipping zones
+      description: "Returns a list of all shipping zones."
+      operationId: listShippingZones
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "The maximum number of results to be returned."
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: "The starting position for the returned values."
+          required: false
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of properties to include (e.g., `country,vat`)."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed. Possible value: `country`."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of shipping zones."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShippingZone"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new shipping zone
+      description: "Creates a new shipping zone."
+      operationId: createShippingZone
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShippingZoneCreate"
+      responses:
+        "201":
+          description: "Shipping zone created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingZone"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /shipping-zones/count:
+    get:
+      summary: Get total shipping zone count
+      description: "Returns a count of the shipping zones."
+      operationId: getShippingZoneCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The number of shipping zones counted."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The number of shipping zones counted."
+                    example: 0
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /shipping-zones/{country-id}:
+    get:
+      summary: Get a specific shipping zone
+      description: "Returns a single shipping zone by country ID."
+      operationId: getShippingZoneById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: country-id
+          in: path
+          description: "ID of the country to return."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of properties to include (e.g., `country,vat`)."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed. Possible value: `country`."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A single shipping zone."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingZone"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Shipping zone not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update an existing shipping zone
+      description: "Updates an existing shipping zone by country ID."
+      operationId: updateShippingZone
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: country-id
+          in: path
+          description: "ID of the country to update."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShippingZoneUpdate"
+      responses:
+        "200":
+          description: "Shipping zone updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingZone"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Shipping zone not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a shipping zone
+      description: "Deletes an existing shipping zone by country ID."
+      operationId: deleteShippingZone
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: country-id
+          in: path
+          description: "ID of the country to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Shipping zone deleted successfully."
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Shipping zone not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ShippingZone:
+      type: object
+      properties:
+        country:
+          type: object
+          description: "The country linked to the shipping zone."
+          properties:
+            id:
+              type: integer
+              description: "Unique identifier for the country."
+            name:
+              type: string
+              description: "The name of the country."
+            iso:
+              type: string
+              description: "The ISO code of the country."
+        vat:
+          type: boolean
+          description: "Whether VAT should be charged."
+
+    ShippingZoneCreate:
+      type: object
+      required:
+        - country
+        - vat
+      properties:
+        country:
+          type: integer
+          description: "The ID of the country for the shipping zone."
+        vat:
+          type: boolean
+          description: "Whether VAT should be charged."
+
+    ShippingZoneUpdate:
+      type: object
+      required:
+        - vat
+      properties:
+        vat:
+          type: boolean
+          description: "Whether VAT should be charged to customers selecting the shipping zone."

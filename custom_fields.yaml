@@ -1,0 +1,275 @@
+openapi: 3.1.0
+info:
+  title: Custom Fields
+  description: API endpoints for managing custom fields.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /custom-fields:
+    get:
+      summary: List custom fields
+      description: "Retrieves a list of custom fields with optional pagination."
+      operationId: listCustomFields
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: "A list of custom fields."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomField"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a custom field
+      description: "Creates a new custom field."
+      operationId: createCustomField
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomFieldCreate"
+      responses:
+        "201":
+          description: "Custom field created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomField"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /custom-fields/count:
+    get:
+      summary: Get total custom field count
+      description: "Retrieves the total number of custom fields."
+      operationId: getCustomFieldCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of custom fields."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of custom fields."
+                    example: 0
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /custom-fields/{id}:
+    get:
+      summary: Get a specific custom field
+      description: "Retrieves a single custom field by ID."
+      operationId: getCustomFieldById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The ID of the custom field."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "The custom field details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomField"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Custom field not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a custom field
+      description: "Updates an existing custom field by ID."
+      operationId: updateCustomField
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The ID of the custom field."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomFieldUpdate"
+      responses:
+        "200":
+          description: "Custom field updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomField"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Custom field not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a custom field
+      description: "Deletes an existing custom field by ID."
+      operationId: deleteCustomField
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The ID of the custom field."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Custom field deleted successfully."
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Custom field not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    CustomField:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the custom field."
+        name:
+          type: string
+          description: "Name of the custom field (max 40 characters, only letters, digits, and underscores)."
+        type:
+          type: string
+          description: "Type of the custom field. Valid values: text, toggle, choice, list, date, date_time, value_list, product_list."
+          default: "text"
+        label:
+          type: string
+          description: "Label of the custom field."
+        itemType:
+          type: string
+          description: "Item type associated with the custom field. Valid values: product, category, brand, order, page, blog_post."
+        sortOrder:
+          type: integer
+          description: "The display order of the custom field."
+        allowedValues:
+          type: array
+          description: "Allowed values for value_list (max 20 values) only for choice and list types."
+          items:
+            type: string
+
+    CustomFieldCreate:
+      type: object
+      required:
+        - name
+        - itemType
+      properties:
+        name:
+          type: string
+          description: "Name of the custom field (max 40 characters, only letters, digits, and underscores)."
+        type:
+          type: string
+          description: "Type of the custom field. Defaults to 'text'. Valid values: text, toggle, choice, list, date, date_time, value_list, product_list."
+          default: "text"
+        label:
+          type: string
+          description: "Label of the custom field."
+        itemType:
+          type: string
+          description: "Item type associated with the custom field. Valid values: product, category, brand, order, page, blog_post."
+        sortOrder:
+          type: integer
+          description: "The display order of the custom field."
+        allowedValues:
+          type: array
+          description: "Allowed values for value_list (max 20 values), only for choice and list types."
+          items:
+            type: string
+
+    CustomFieldUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Updated name of the custom field."
+        type:
+          type: string
+          description: "Updated type of the custom field."
+        label:
+          type: string
+          description: "Updated label of the custom field."
+        sortOrder:
+          type: integer
+          description: "Updated sort order of the custom field."
+        allowedValues:
+          type: array
+          description: "Updated allowed values."
+          items:
+            type: string

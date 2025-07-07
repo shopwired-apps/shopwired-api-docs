@@ -1,0 +1,165 @@
+openapi: 3.1.0
+info:
+  title: "Theme Assets"
+  description: "API endpoints for managing theme assets."
+  version: "1.3.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: "Production API server"
+
+paths:
+  /theme-assets/{theme_id}:
+    get:
+      summary: "List or get theme assets"
+      description: |
+        "Retrieves a list of theme assets for a specified theme.
+        If the `key` query parameter is provided, returns a single asset."
+      operationId: listOrGetThemeAssets
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: theme_id
+          in: path
+          description: "The unique identifier of the theme."
+          required: true
+          schema:
+            type: integer
+        - name: key
+          in: query
+          description: "The key/path of a specific asset to retrieve."
+          required: false
+          schema:
+            type: string
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of theme assets or a single asset."
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/ThemeAsset"
+                  - $ref: "#/components/schemas/ThemeAsset"
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Theme or asset not found."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: "Create or update a theme asset"
+      description: "Uploads a new asset or updates an existing one."
+      operationId: createOrUpdateThemeAsset
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: theme_id
+          in: path
+          description: "The unique identifier of the theme."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ThemeAssetCreate"
+      responses:
+        "201":
+          description: "Theme asset created or updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThemeAsset"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "422":
+          description: "Unprocessable entity (missing required fields)."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: "Delete a theme asset"
+      description: "Deletes a specified asset from a theme."
+      operationId: deleteThemeAsset
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: theme_id
+          in: path
+          description: "The unique identifier of the theme."
+          required: true
+          schema:
+            type: integer
+        - name: key
+          in: query
+          description: "The key of the theme asset to delete."
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: "Theme asset deleted successfully."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Theme asset not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ThemeAsset:
+      type: object
+      properties:
+        key:
+          type: string
+          description: "Theme asset location in theme files (e.g. \"assets/theme.scss\")."
+        url:
+          type: string
+          format: uri
+          description: "Theme asset URL."
+        content:
+          type: string
+          description: "File content (for text files, e.g. CSS, JS, SCSS, etc.)."
+        attachment:
+          type: string
+          description: "Base64-encoded file data (for binary files, e.g. images, fonts)."
+      required:
+        - key
+        - url
+
+    ThemeAssetCreate:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+          description: "Theme asset location in theme files (e.g. \"assets/theme.scss\")."
+        content:
+          type: string
+          description: "File content (for text files, e.g. CSS, JS, SCSS, etc.)."
+        attachment:
+          type: string
+          description: "Base64-encoded file data (for binary files, e.g. images, fonts)."
+        source_key:
+          type: string
+          description: "If provided, copy an existing asset to this key."

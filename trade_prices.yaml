@@ -1,0 +1,286 @@
+openapi: 3.1.0
+info:
+  title: Trade Customer Product Prices
+  description: API endpoints for managing individual trade customer prices. This endpoint does not return individual trade customer prices uploaded through the ShopWired account. 
+  version: "1.0.3"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /trade-customer-product-prices:
+    get:
+      summary: List trade customer product prices
+      description: "Retrieves a list of trade customer product prices. Can be filtered by `customer_id` and `product_id`."
+      operationId: listTradeCustomerProductPrices
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: customer_id
+          in: query
+          description: "Filter by trade customer ID."
+          required: false
+          schema:
+            type: integer
+        - name: product_id
+          in: query
+          description: "Filter by product ID. Requires `customer_id` to be specified."
+          required: false
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of trade customer product prices."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TradeCustomerProductPrice"
+
+    post:
+      summary: Create a new trade customer product price
+      description: "Creates a new trade customer product price."
+      operationId: createTradeCustomerProductPrice
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeCustomerProductPriceCreate"
+      responses:
+        "201":
+          description: "Trade customer product price created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeCustomerProductPrice"
+
+  /trade-customer-product-prices/count:
+    get:
+      summary: Get total trade customer product price count
+      description: "Retrieves the total number of trade customer product prices."
+      operationId: getTradeCustomerProductPriceCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of trade customer product prices."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of prices."
+
+  /trade-customer-product-prices/{id}:
+    get:
+      summary: Get a specific trade customer product price
+      description: "Retrieves a single trade customer product price by ID."
+      operationId: getTradeCustomerProductPriceById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the price."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "The trade customer product price details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeCustomerProductPrice"
+
+    put:
+      summary: Update a trade customer product price
+      description: "Updates an existing trade customer product price by ID."
+      operationId: updateTradeCustomerProductPrice
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the price."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeCustomerProductPriceUpdate"
+      responses:
+        "200":
+          description: "Trade customer product price updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeCustomerProductPrice"
+
+    delete:
+      summary: Delete a trade customer product price
+      description: "Deletes an existing trade customer product price by ID."
+      operationId: deleteTradeCustomerProductPrice
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the price."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Trade customer product price deleted successfully."
+
+  /trade-customer-product-prices/bulk:
+    post:
+      summary: Bulk create or remove trade customer product prices
+      description: "Processes multiple trade customer product prices in a single request. Supports up to 25 actions."
+      operationId: bulkTradeCustomerProductPrices
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actions:
+                  type: array
+                  description: "Array of actions to perform."
+                  maxItems: 25
+                  items:
+                    $ref: "#/components/schemas/TradeCustomerProductPriceBulkAction"
+      responses:
+        "200":
+          description: "Results of the bulk operations."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TradeCustomerProductPriceBulkResult"
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    TradeCustomerProductPrice:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "The ID of the trade price."
+        customerId:
+          type: integer
+          description: "The ID of the trade customer."
+        productId:
+          type: integer
+          description: "The ID of the product."
+        sku:
+          type: string
+          nullable: true
+          description: "The SKU code for the product/product variation."
+        price:
+          type: number
+          format: float
+          description: "The configured trade price."
+
+    TradeCustomerProductPriceCreate:
+      type: object
+      required:
+        - customerId
+        - productId
+        - price
+      properties:
+        customerId:
+          type: integer
+          description: "The ID of the trade customer."
+        productId:
+          type: integer
+          description: "The ID of the product."
+        sku:
+          type: string
+          description: "The SKU code for the product/product variation."
+        price:
+          type: number
+          format: float
+          description: "The configured trade price."
+
+    TradeCustomerProductPriceUpdate:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: "The SKU code for the product/product variation."
+        price:
+          type: number
+          format: float
+          description: "The configured trade price."
+
+    TradeCustomerProductPriceBulkAction:
+      type: object
+      properties:
+        type:
+          type: string
+          description: "The action being taken on the trade price. Only used when removing a trade price."
+          enum: [remove]
+        id:
+          type: integer
+          description: "The ID of the trade price. Required when removing a trade price."
+          nullable: true
+        customerId:
+          type: integer
+          required: true
+          description: "The ID of the trade customer."
+          nullable: true
+        productId:
+          type: integer
+          description: "The ID of the product."
+          required: true
+          nullable: true
+        sku:
+          type: string
+          description: "The SKU code for the product/product variation."
+          nullable: true
+        price:
+          type: number
+          description: "The trade price."
+          required: true
+          format: float
+          nullable: true
+
+    TradeCustomerProductPriceBulkResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: string
+          nullable: true
+        id:
+          type: integer
+          description: "The ID of the trade price."
+          nullable: true

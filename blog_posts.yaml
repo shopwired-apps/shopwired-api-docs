@@ -1,0 +1,416 @@
+openapi: 3.1.0
+info:
+  title: Blog Posts
+  description: API endpoints for managing blog posts in ShopWired.
+  version: "1.0.8"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /blog-posts:
+    get:
+      summary: List blog posts
+      description: "Retrieves a list of blog posts with pagination."
+      operationId: listBlogPosts
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to creation date."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+              - title
+              - title_desc
+              - edited
+              - edited_desc
+          example: "created_desc"
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+          example: "id,title,slug"
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available values: `content`, `category`, `tags`."
+          required: false
+          schema:
+            type: string
+          example: "content,category,tags"
+      responses:
+        "200":
+          description: "A list of blog posts."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlogPost"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new blog post
+      description: "Creates a new blog post."
+      operationId: createBlogPost
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogPostCreate"
+      responses:
+        "201":
+          description: "Blog post created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /blog-posts/count:
+    get:
+      summary: Get total blog post count
+      description: "Retrieves the total number of blog posts."
+      operationId: getBlogPostCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of blog posts."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of blog posts."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /blog-posts/{id}:
+    get:
+      summary: Get a specific blog post
+      description: "Retrieves a single blog post by ID."
+      operationId: getBlogPostById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the blog post."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+          example: "id,title,slug"
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available values: `content`, `category`, `tags`."
+          required: false
+          schema:
+            type: string
+          example: "content,category,tags"
+      responses:
+        "200":
+          description: "The blog post details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Blog post not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a blog post
+      description: "Updates an existing blog post by ID."
+      operationId: updateBlogPost
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the blog post."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogPostCreate"
+      responses:
+        "200":
+          description: "Blog post updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Blog post not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a blog post
+      description: "Deletes an existing blog post by ID."
+      operationId: deleteBlogPost
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the blog post."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Blog post deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Blog post not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    BlogPost:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the blog post."
+        createdAt:
+          type: string
+          format: date-time
+          description: "The date and time when the blog post was created."
+        title:
+          type: string
+          description: "The title of the blog post."
+        slug:
+          type: string
+          description: "The URL slug for the blog post."
+        url:
+          type: string
+          description: "The full URL for the blog post."
+        active:
+          type: boolean
+          description: "Whether the blog post is active."
+        metaTitle:
+          type: string
+          description: "The meta title for the blog post."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the blog post."
+        metaDescription:
+          type: string
+          description: "The meta description for the blog post."
+        author:
+          type: string
+          description: "The name of the user who created the blog post."
+        customUrl:
+          type: string
+          description: "A custom URL for the blog post."
+        releaseDate:
+          type: string
+          description: "The release date of the blog post."
+        image:
+          type: object
+          description: "The image associated with the blog post."
+          properties:
+            url:
+              type: string
+              description: "The URL of the image."
+        content:
+          type: string
+          description: "The full content of the blog post (only present when 'content' is embedded)."
+        excerpt:
+          type: string
+          description: "The excerpt of the blog post."
+        category:
+          type: object
+          description: "The category of the blog post (only present when 'category' is embedded)."
+          properties:
+            id:
+              type: integer
+              description: "The unique ID of the category."
+            title:
+              type: string
+              description: "The title of the category."
+            slug:
+              type: string
+              description: "The URL slug of the category."
+            url:
+              type: string
+              description: "The full URL of the category."
+        tags:
+          type: array
+          description: "The tags associated with the blog post (only present when 'tags' is embedded)."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "The unique ID of the tag."
+              title:
+                type: string
+                description: "The title of the tag."
+              slug:
+                type: string
+                description: "The URL slug of the tag."
+              url:
+                type: string
+                description: "The full URL of the tag."
+    BlogPostCreate:
+      type: object
+      required:
+        - title
+        - slug
+      properties:
+        title:
+          type: string
+          description: "The title of the blog post."
+        slug:
+          type: string
+          description: "The URL slug for the blog post."
+        active:
+          type: boolean
+          description: "Whether the blog post is active (default: true)."
+        metaTitle:
+          type: string
+          description: "The title tag for SEO."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for SEO."
+        metaDescription:
+          type: string
+          description: "The meta description for SEO."
+        customUrl:
+          type: string
+          description: "A custom URL for the blog post."
+        image:
+          type: string
+          description: "URL or base64 encoded image for the blog post."
+        content:
+          type: string
+          description: "The full content of the blog post."
+        excerpt:
+          type: string
+          description: "A short excerpt of the blog post."
+        categoryId:
+          type: integer
+          description: "The ID of the category assigned to the blog post."
+        categoryTitle:
+          type: string
+          description: "The title of the category assigned to the blog post."
+        tags:
+          type: string
+          description: "Comma-separated list of tags for the blog post."
+    BlogPostUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: "The title of the blog post."
+        slug:
+          type: string
+          description: "The URL slug for the blog post."
+        active:
+          type: boolean
+          description: "Whether the blog post is active (default: true)."
+        metaTitle:
+          type: string
+          description: "The title tag for the blog post page."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the blog post page."
+        metaDescription:
+          type: string
+          description: "The meta description for the blog post page."
+        customUrl:
+          type: string
+          description: "Custom URL for the blog post."
+        image:
+          type: string
+          description: "URL or base64 encoded image for the blog post."
+        content:
+          type: string
+          description: "The content of the blog post."
+        excerpt:
+          type: string
+          description: "The excerpt of the blog post."
+        categoryId:
+          type: integer
+          description: "The ID of the category assigned to the blog post."
+        categoryTitle:
+          type: string
+          description: "The title of the category assigned to the blog post."
+        tags:
+          type: string
+          description: "Comma-separated list of tags for the blog post."

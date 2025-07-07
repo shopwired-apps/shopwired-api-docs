@@ -1,0 +1,267 @@
+openapi: 3.1.0
+info:
+  title: Sales
+  description: API endpoints for managing sales through ShopWired.
+  version: "1.0.2"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /sales:
+    get:
+      summary: List sales
+      description: "Retrieves a list of sales with pagination."
+      operationId: listSales
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of sales."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sale"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a sale
+      description: "Creates a new sale."
+      operationId: createSale
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaleCreate"
+      responses:
+        "201":
+          description: "Sale created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sale"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /sales/count:
+    get:
+      summary: Get total sales count
+      description: "Retrieves the total number of sales."
+      operationId: getSaleCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of sales."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of sales."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /sales/{id}:
+    get:
+      summary: Get a specific sale
+      description: "Retrieves a single sale by ID."
+      operationId: getSaleById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the sale."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The sale details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sale"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Sale not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a sale
+      description: "Updates an existing sale by ID."
+      operationId: updateSale
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the sale."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaleCreate"
+      responses:
+        "200":
+          description: "Sale updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sale"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Sale not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a sale
+      description: "Deletes an existing sale by ID."
+      operationId: deleteSale
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the sale."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Sale deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Sale not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Sale:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the sale."
+        targetType:
+          type: string
+          description: "Target type for the sale. Values: 'all', 'category', 'brand', 'product'."
+        targetId:
+          type: integer
+          description: "ID of the target for the sale."
+        discount:
+          type: integer
+          description: "Percentage discount for the sale."
+        validFrom:
+          type: string
+          format: date-time
+          description: "Start date and time for the sale."
+        expiresOn:
+          type: string
+          format: date-time
+          description: "Expiry date and time for the sale. If not set, the sale has no expiry."
+        active:
+          type: boolean
+          description: "Indicates whether the sale is active."
+
+    SaleCreate:
+      type: object
+      required:
+        - targetType
+        - targetId
+        - discount
+        - validFrom
+        - active
+      properties:
+        targetType:
+          type: string
+          description: "Target type for the sale. Values: 'all', 'category', 'brand', 'product'."
+        targetId:
+          type: integer
+          description: "ID of the target for the sale."
+        discount:
+          type: integer
+          description: "Percentage discount for the sale."
+        validFrom:
+          type: string
+          format: date-time
+          description: "Start date and time for the sale."
+        expiresOn:
+          type: string
+          format: date-time
+          description: "Expiry date and time for the sale. If not set, the sale has no expiry."
+        active:
+          type: boolean
+          description: "Indicates whether the sale is active."

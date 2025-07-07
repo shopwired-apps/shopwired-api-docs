@@ -1,0 +1,126 @@
+openapi: 3.1.0
+info:
+  title: Countries
+  description: API endpoints for retrieving country information.
+  version: "1.0.2"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /countries:
+    get:
+      summary: List countries
+      description: "Retrieves a list of countries."
+      operationId: listCountries
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: fields
+          in: query
+          description: "Comma-separated list of properties to include in the response. Available values: 'id', 'name', 'iso', 'states'."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available value: 'states'."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of countries."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Country"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /countries/{id}:
+    get:
+      summary: Get a specific country
+      description: "Retrieves a single country by ID."
+      operationId: getCountryById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the country to return."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of properties to include in the response. Available values: 'id', 'name', 'iso', 'states'."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available value: 'states'."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The country details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Country"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Country not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Country:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "The ID of the country."
+        name:
+          type: string
+          description: "The name of the country."
+        iso:
+          type: string
+          description: "The ISO code of the country."
+        states:
+          type: array
+          description: "List of states associated with the country."
+          items:
+            $ref: "#/components/schemas/State"
+
+    State:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "The ID of the state."
+        name:
+          type: string
+          description: "The full name of the state."
+        shortName:
+          type: string
+          description: "The abbreviated name of the state."

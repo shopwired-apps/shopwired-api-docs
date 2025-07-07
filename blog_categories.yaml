@@ -1,0 +1,258 @@
+openapi: 3.1.0
+info:
+  title: Blog Categories
+  description: API endpoints for managing blog categories through ShopWired.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /blog-categories:
+    get:
+      summary: List blog categories
+      description: "Retrieves a list of blog categories with pagination."
+      operationId: listBlogCategories
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to creation date if not provided."
+          required: false
+          schema:
+            type: string
+            enum:
+              - name
+              - name_desc
+            example: "name_desc"
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of blog categories."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlogCategory"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new blog category
+      description: "Creates a new blog category."
+      operationId: createBlogCategory
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogCategoryCreate"
+      responses:
+        "201":
+          description: "Blog category created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogCategory"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /blog-categories/count:
+    get:
+      summary: Get total blog category count
+      description: "Retrieves the total number of blog categories."
+      operationId: getBlogCategoryCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of blog categories."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of blog categories."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /blog-categories/{id}:
+    get:
+      summary: Get a specific blog category
+      description: "Retrieves a single blog category by ID."
+      operationId: getBlogCategoryById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the blog category."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The blog category details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogCategory"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Blog category not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a blog category
+      description: "Updates an existing blog category by ID."
+      operationId: updateBlogCategory
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the blog category."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogCategoryUpdate"
+      responses:
+        "200":
+          description: "Blog category updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogCategory"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Blog category not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a blog category
+      description: "Deletes an existing blog category by ID."
+      operationId: deleteBlogCategory
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the blog category."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Blog category deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Blog category not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    BlogCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the blog category."
+        title:
+          type: string
+          description: "The title/name of the blog category."
+        slug:
+          type: string
+          description: "The URL slug for the blog category."
+        url:
+          type: string
+          description: "The full URL for the blog category."
+
+    BlogCategoryCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: "The title/name of the blog category."
+        slug:
+          type: string
+          description: "The URL slug for the blog category (without domain)."
+
+    BlogCategoryUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: "The title/name of the blog category."
+        slug:
+          type: string
+          description: "The URL slug for the blog category (without domain)."

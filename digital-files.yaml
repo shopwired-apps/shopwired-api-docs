@@ -1,0 +1,280 @@
+openapi: 3.1.0
+info:
+  title: Digital Files
+  description: API endpoints for managing digital download files.
+  version: "1.0.3"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /digital-files:
+    get:
+      summary: List digital files
+      description: "Retrieves a list of digital files with pagination and filtering."
+      operationId: listDigitalFiles
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to creation date."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+              - title
+              - title_desc
+          example: "title_desc"
+        - name: since_id
+          in: query
+          description: "Retrieve digital files with an ID greater than this value."
+          required: false
+          schema:
+            type: integer
+        - name: created_before
+          in: query
+          description: "Retrieve digital files created before this date (ISO 8601 format)."
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: created_after
+          in: query
+          description: "Retrieve digital files created after this date (ISO 8601 format)."
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of digital files."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DigitalFile"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new digital file
+      description: "Creates a new digital file. Can only be used to create digital files hosted externally."
+      operationId: createDigitalFile
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DigitalFileCreate"
+      responses:
+        "201":
+          description: "Digital file created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DigitalFile"
+        "422":
+          description: "Validation error."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+
+  /digital-files/count:
+    get:
+      summary: Get total digital file count
+      description: "Retrieves the total number of digital files, with optional filtering."
+      operationId: getDigitalFileCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of digital files."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of digital files."
+                    example: 100
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /digital-files/{id}:
+    get:
+      summary: Get a specific digital file
+      description: "Retrieves a single digital file by ID."
+      operationId: getDigitalFileById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the digital file."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The digital file details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DigitalFile"
+        "404":
+          description: "Digital file not found."
+
+    put:
+      summary: Update a digital file
+      description: "Updates an existing digital file."
+      operationId: updateDigitalFile
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the digital file."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DigitalFileUpdate"
+      responses:
+        "200":
+          description: "Digital file updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DigitalFile"
+        "422":
+          description: "Validation error."
+        "404":
+          description: "Digital file not found."
+
+    delete:
+      summary: Delete a digital file
+      description: "Deletes an existing digital file (only if it is an externally hosted file)."
+      operationId: deleteDigitalFile
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the digital file."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Digital file deleted successfully."
+        "400":
+          description: "Cannot delete uploaded digital files."
+        "404":
+          description: "Digital file not found."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    DigitalFile:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the digital file."
+        created:
+          type: string
+          format: date-time
+          description: "Timestamp when the digital file was created."
+        name:
+          type: string
+          description: "The name of the digital file."
+        extension:
+          type: string
+          description: "The file extension (alphanumeric only)."
+        tag:
+          type: string
+          description: "A tag associated with the digital file."
+        sourceUrl:
+          type: string
+          description: "The URL of the externally hosted digital file."
+        isUploaded:
+          type: boolean
+          description: "Indicates if the digital file has been uploaded."
+
+    DigitalFileCreate:
+      type: object
+      required:
+        - name
+        - extension
+        - sourceUrl
+      properties:
+        name:
+          type: string
+        extension:
+          type: string
+        tag:
+          type: string
+        sourceUrl:
+          type: string
+
+    DigitalFileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        tag:
+          type: string
+        sourceUrl:
+          type: string
+          description: "Cannot update sourceUrl for uploaded files."

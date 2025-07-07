@@ -1,0 +1,295 @@
+openapi: 3.1.0
+info:
+  title: Shipping Rates
+  description: API endpoints for managing shipping rates.
+  version: "1.0.4"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /shipping-rates:
+    get:
+      summary: List shipping rates
+      description: "Retrieves a list of shipping rates with pagination."
+      operationId: listShippingRates
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available values: `country`, `states`, `postcodes`."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of shipping rates."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShippingRate"
+
+    post:
+      summary: Create a new shipping rate
+      description: "Creates a new shipping rate."
+      operationId: createShippingRate
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShippingRateCreate"
+      responses:
+        "201":
+          description: "Shipping rate created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingRate"
+
+  /shipping-rates/{id}:
+    get:
+      summary: Get a specific shipping rate
+      description: "Retrieves a single shipping rate by ID."
+      operationId: getShippingRateById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the shipping rate."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available values: `country`, `states`, `postcodes`."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The shipping rate details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingRate"
+
+    put:
+      summary: Update a shipping rate
+      description: "Updates an existing shipping rate. Country cannot be changed after creation."
+      operationId: updateShippingRate
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the shipping rate."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShippingRateUpdate"
+      responses:
+        "200":
+          description: "Shipping rate updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingRate"
+
+    delete:
+      summary: Delete a shipping rate
+      description: "Deletes an existing shipping rate."
+      operationId: deleteShippingRate
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the shipping rate."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Shipping rate deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ShippingRate:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the shipping rate."
+        name:
+          type: string
+          description: "The name of the shipping rate."
+        criteria:
+          type: string
+          description: "The criteria for the shipping rate (price or weight)."
+        from:
+          type: number
+          description: "The starting value for the criteria."
+        to:
+          type: number
+          description: "The end value for the criteria (0 for unlimited)."
+        cost:
+          type: number
+          description: "The cost of the shipping rate."
+        vatExclusive:
+          type: boolean
+          description: "Whether the shipping rate is VAT exempt / zero rated."
+        enabled:
+          type: boolean
+          description: "Whether the shipping rate is enabled."
+        maximumWeight:
+          type: number
+          description: "Maximum weight applicable for the rate."
+        maximumPrice:
+          type: number
+          description: "Maximum price applicable for the rate."
+        country:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: "Country identifier."
+            name:
+              type: string
+              description: "Country name."
+            iso:
+              type: string
+              description: "ISO 3166-1 alpha-2 country code."
+        postcodes:
+          type: array
+          items:
+            type: string
+            description: "List of postcodes for the shipping rate (UK only)."
+        states:
+          type: array
+          items:
+            type: string
+            description: "List of state codes for the shipping rate (US only)."
+    
+    ShippingRateCreate:
+      type: object
+      required:
+        - country
+        - name
+        - criteria
+        - from
+        - to
+        - cost
+        - vatExclusive
+      properties:
+        name:
+          type: string
+          description: "The name of the shipping rate."
+        country:
+          type: integer
+          description: "The unique ID of the country."
+        states:
+          type: array
+          items:
+            type: string
+          description: "List of state IDs (for US)."
+        postcodes:
+          type: array
+          items:
+            type: string
+          description: "List of postcodes (for UK)."
+        criteria:
+          type: string
+          description: "The criteria for the shipping rate (price or weight)."
+          enum: ["price", "weight"]
+        from:
+          description: "The starting value for the criteria."
+          type: number
+        to:
+          description: "The end value for the criteria (0 for unlimited)."
+          type: number
+        cost:
+          description: "The cost of the shipping rate."
+          type: number
+        vatExclusive:
+          description: "Whether the shipping rate is VAT exempt / zero rated."
+          type: boolean
+
+    ShippingRateUpdate:
+      type: object
+      properties:
+        states:
+          type: array
+          description: "List of state IDs (for US)."
+          items:
+            type: string
+        postcodes:
+          type: array
+          description: "List of postcodes (for UK)."
+          items:
+            type: string
+        name:
+          description: "The name of the shipping rate."
+          type: string
+        criteria:
+          type: string
+          enum: ["price", "weight"]
+        from:
+          description: "The starting value for the criteria."
+          type: number
+        to:
+          description: "The end value for the criteria (0 for unlimited)."
+          type: number
+        cost:
+          description: "The cost of the shipping rate."
+          type: number
+        vatExclusive:
+          description: "Whether the shipping rate is VAT exempt / zero rated."
+          type: boolean
+        enabled:
+          description: "Whether the shipping rate is enabled."
+          type: boolean

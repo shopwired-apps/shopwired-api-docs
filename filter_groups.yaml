@@ -1,0 +1,252 @@
+openapi: 3.1.0
+info:
+  title: Filter Groups
+  description: API endpoints for managing filter groups.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /filter-groups:
+    get:
+      summary: List filter groups
+      description: "Retrieves a list of filter groups with pagination."
+      operationId: listFilterGroups
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve."
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to no sorting."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+            example: "created_desc"
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of filter groups."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FilterGroup"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new filter group
+      description: "Creates a new filter group."
+      operationId: createFilterGroup
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FilterGroupCreate"
+      responses:
+        "201":
+          description: "Filter group successfully created."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilterGroup"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /filter-groups/count:
+    get:
+      summary: Get total filter group count
+      description: "Retrieves the total number of filter groups."
+      operationId: getFilterGroupCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of filter groups."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of filter groups."
+                    example: 10
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /filter-groups/{id}:
+    get:
+      summary: Get a specific filter group
+      description: "Retrieves a single filter group by ID."
+      operationId: getFilterGroupById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the filter group."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The filter group details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilterGroup"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Filter group not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a filter group
+      description: "Updates an existing filter group."
+      operationId: updateFilterGroup
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the filter group."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FilterGroupUpdate"
+      responses:
+        "200":
+          description: "Filter group successfully updated."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilterGroup"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Filter group not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a filter group
+      description: "Deletes an existing filter group."
+      operationId: deleteFilterGroup
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the filter group."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Filter group successfully deleted."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Filter group not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    FilterGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the filter group."
+        title:
+          type: string
+          description: "The name/title of the filter group."
+        option:
+          type: integer
+          description: "The filter group option identifier."
+        sortOrder:
+          type: integer
+          description: "A number which represents where the filter group should appear in the list."
+
+    FilterGroupCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: "The name/title of the filter group."
+
+    FilterGroupUpdate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: "The name/title of the filter group."

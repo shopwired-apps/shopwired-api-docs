@@ -1,0 +1,171 @@
+openapi: 3.1.0
+info:
+  title: Events
+  description: API endpoints for retrieving event data, similar to webhook data.
+  version: "1.0.6"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /events:
+    get:
+      summary: Get all events
+      description: "Retrieves a list of events."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: topic
+          in: query
+          description: "Filters events by topic."
+          required: false
+          schema:
+            type: string
+        - name: since_id
+          in: query
+          description: "Returns events with an ID greater than this value."
+          required: false
+          schema:
+            type: integer 
+        - name: created_after
+          in: query
+          description: "Returns events created after this ISO 8601 timestamp."
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: created_before
+          in: query
+          description: "Returns events created before this ISO 8601 timestamp."
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: count
+          in: query
+          description: "Limits the number of returned results."
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: "Skips a number of results."
+          required: false
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: subject_type
+          in: query
+          description: "The type of the subject associated with the event (e.g., 'order'). Required when filtering by subject_id."
+          required: false
+          schema:
+            type: string
+            enum:
+              - product
+              - category
+              - brand
+              - tag
+              - customer
+              - order
+              - newsletter_subscriber
+              - wishlist
+              - sale
+              - collect_location
+              - shopwired_payments_payout
+              - shopwired_payments_dispute
+              - shopwired_payments_charge
+              - order_refund
+              - stock_request
+        - name: subject_id
+          in: query
+          description: "The ID of the subject to filter by. Only valid when subject_type is also provided."
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+
+  /events/count:
+    get:
+      summary: Get total event count
+      description: "Retrieves the total number of events."
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of events."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of events."
+
+  /events/{id}:
+    get:
+      summary: Get an event by ID
+      description: "Retrieves a single event by its ID."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the event."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "The unique identifier of the event."
+        createdAt:
+          type: string
+          description: "The creation date of the event."
+        topic:
+          type: string
+          description: "The topic of the event."
+        subjectType:
+          type: string
+          description: "The type of the subject associated with the event (e.g., 'order')."
+        subjectId:
+          type: integer
+          description: "The ID of the subject associated with the event."
+        generator:
+          type: string
+          description: "The source of the event generation (e.g., 'backend')."
+        data:
+          type: object
+          description: "The event data object, structure depends on the event type (e.g., orders, products, etc.)."
+          additionalProperties: true

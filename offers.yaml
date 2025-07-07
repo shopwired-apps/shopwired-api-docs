@@ -1,0 +1,452 @@
+openapi: 3.1.0
+info:
+  title: Offers
+  description: API endpoints for managing offers through ShopWired.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /offers:
+    get:
+      summary: List offers
+      description: "Retrieves a list of offers with pagination."
+      operationId: listOffers
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to creation date."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+          example: "created_desc"
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available values: `targets`, `excluded_products`."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of offers."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Offer"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new offer
+      description: "Creates a new offer."
+      operationId: createOffer
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferCreate"
+      responses:
+        "201":
+          description: "Offer created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /offers/count:
+    get:
+      summary: Get total offer count
+      description: "Retrieves the total number of offers."
+      operationId: getOfferCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of offers."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of offers."
+                    example: 42
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /offers/{id}:
+    get:
+      summary: Get a specific offer
+      description: "Retrieves a single offer by ID."
+      operationId: getOfferById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the offer."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available values: `targets`, `excluded_products`."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The offer details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Offer not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update an offer
+      description: "Updates an existing offer by ID. All fields are optional except `title` and `itemCount`."
+      operationId: updateOffer
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the offer."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferUpdate"
+      responses:
+        "200":
+          description: "Offer updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Offer not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete an offer
+      description: "Deletes an existing offer by ID."
+      operationId: deleteOffer
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the offer."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Offer deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Offer not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Offer:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the offer."
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp when the offer was created."
+        active:
+          type: boolean
+          description: "Indicates if the offer is active."
+        title:
+          type: string
+          description: "The title of the offer."
+        description:
+          type: string
+          description: "Description of the offer."
+        startDate:
+          type: string
+          format: date-time
+          description: "Date/time when the offer starts. Empty string means unset."
+        endDate:
+          type: string
+          format: date-time
+          description: "Date/time when the offer ends. Empty string means unset."
+        discountType:
+          type: string
+          description: "Type of discount applied."
+          enum:
+            - fixed_price
+            - percent
+            - monetary
+        discountAmount:
+          type: number
+          description: "Amount of the discount. If `discountType` is `percent`, must be between 0 and 100."
+        maximumDiscountAmount:
+          type: number
+          description: "Maximum monetary discount limit when using `percent` discount type. Empty or unset if not applicable."
+        itemCount:
+          type: integer
+          description: "Number of products the customer must purchase from this offer to qualify."
+        itemSortOrder:
+          type: string
+          description: "Determines how items are sorted to form the offer."
+          enum:
+            - price_asc
+            - price_desc
+        targets:
+          type: array
+          description: "The products, categories, or brands to which the offer applies."
+          items:
+            $ref: "#/components/schemas/OfferTarget"
+        excludedProducts:
+          type: array
+          description: "An array of product IDs excluded from the offer."
+          items:
+            type: integer
+        supportsPreOrderProducts:
+          type: boolean
+          description: "Whether this offer applies to products that are on pre-order."
+        productShippingStartDate:
+          type: string
+          format: date-time
+          description: "Shipping start date for the excluded pre-order products. Empty string if none."
+        productShippingEndDate:
+          type: string
+          format: date-time
+          description: "Shipping end date for the excluded pre-order products. Empty string if none."
+
+    OfferCreate:
+      type: object
+      required:
+        - title
+        - itemCount
+      properties:
+        active:
+          type: boolean
+          description: "Indicates if the offer is active (default: false)."
+        title:
+          type: string
+          description: "The title of the offer. Cannot be empty."
+        description:
+          type: string
+          description: "Description of the offer."
+        startDate:
+          type: string
+          format: date-time
+          description: "When the offer starts. When unset the offer will start immediately."
+        endDate:
+          type: string
+          format: date-time
+          description: "When the offer ends. When unset the offer will run indefinitely."
+        discountType:
+          type: string
+          enum:
+            - fixed_price
+            - percent
+            - monetary
+          description: "Type of discount for the offer."
+        discountAmount:
+          type: number
+          description: "Discount amount. If `discountType` is `percent`, must be between 0 and 100."
+        maximumDiscountAmount:
+          type: number
+          description: "Maximum monetary discount if using `percent`. Leave unset if not applicable."
+        itemCount:
+          type: integer
+          description: "Number of products needed to qualify (must be greater than 0)."
+        itemSortOrder:
+          type: string
+          enum:
+            - price_asc
+            - price_desc
+          description: "The order used to pick items for discount."
+        targets:
+          type: array
+          description: "Objects specifying which items are included in the offer."
+          items:
+            $ref: "#/components/schemas/OfferTarget"
+        supportsPreOrderProducts:
+          type: boolean
+          description: "Whether the offer applies to pre-order products."
+          default: false
+        productShippingStartDate:
+          type: string
+          format: date-time
+          description: "Shipping start date for the excluded pre-order products. Empty string or unset if not used."
+        productShippingEndDate:
+          type: string
+          format: date-time
+          description: "Shipping end date for the excluded pre-order products. Empty string or unset if not used."
+        excludedProducts:
+          type: array
+          description: "An array of product IDs excluded from the offer."
+          items:
+            type: integer
+
+    OfferUpdate:
+      type: object
+      properties:
+        active:
+          type: boolean
+          description: "Indicates if the offer is active."
+        title:
+          type: string
+          description: "The title of the offer. Cannot be empty."
+        description:
+          type: string
+          description: "Description of the offer."
+        startDate:
+          type: string
+          format: date-time
+          description: "When the offer starts. Empty string will reset the start date."
+        endDate:
+          type: string
+          format: date-time
+          description: "When the offer ends. Empty string will reset the end date."
+        discountType:
+          type: string
+          enum:
+            - fixed_price
+            - percent
+            - monetary
+          description: "Type of discount for the offer."
+        discountAmount:
+          type: number
+          description: "Discount amount. If `discountType` is `percent`, must be between 0 and 100."
+        maximumDiscountAmount:
+          type: number
+          description: "Maximum monetary discount if using `percent`. Leave unset if not applicable."
+        itemCount:
+          type: integer
+          description: "Number of products needed to qualify (must be greater than 0)."
+        itemSortOrder:
+          type: string
+          enum:
+            - price_asc
+            - price_desc
+          description: "The order used to pick items for discount."
+        targets:
+          type: array
+          description: "Objects specifying which items are included in the offer."
+          items:
+            $ref: "#/components/schemas/OfferTarget"
+        supportsPreOrderProducts:
+          type: boolean
+          description: "Whether the offer applies to pre-order products."
+        productShippingStartDate:
+          type: string
+          format: date-time
+          description: "Shipping start date for the excluded pre-order products. Empty string or unset if not used."
+        productShippingEndDate:
+          type: string
+          format: date-time
+          description: "Shipping end date for the excluded pre-order products. Empty string or unset if not used."
+        excludedProducts:
+          type: array
+          description: "An array of product IDs excluded from the offer."
+          items:
+            type: integer
+
+    OfferTarget:
+      type: object
+      properties:
+        type:
+          type: string
+          description: "The target type (e.g., product, category, brand)."
+        itemId:
+          type: integer
+          description: "The ID of the target (product, category, or brand)."
+        minQuantity:
+          type: integer
+          description: "Minimum quantity of this target required for the offer."
+        maxQuantity:
+          type: integer
+          description: "Maximum quantity of this target used by the offer. Zero or unset indicates no maximum."

@@ -1,0 +1,435 @@
+openapi: 3.1.0
+info:
+  title: Customers
+  description: API endpoints for managing customers in ShopWired.
+  version: "1.0.9"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /customers:
+    get:
+      summary: List customers
+      description: "Retrieves a list of customers with pagination and filtering options."
+      operationId: listCustomers
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to creation date."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+              - name
+              - name_desc
+              - company
+              - company_desc
+          example: "created_desc"
+        - name: trade
+          in: query
+          description: "0 for regular customers, 1 for trade customers."
+          required: false
+          schema:
+            type: integer
+            enum: [0, 1]
+        - name: fields
+          in: query
+          description: "Comma-separated list of properties to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of properties to embed. Available options: country,state,wishlists."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of customers."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new customer
+      description: "Creates a new customer."
+      operationId: createCustomer
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerCreate"
+      responses:
+        "201":
+          description: "Customer created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /customers/count:
+    get:
+      summary: Get total customer count
+      description: "Retrieves the total number of customers."
+      operationId: getCustomerCount
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: trade
+          in: query
+          description: "0 for regular customers, 1 for trade customers."
+          required: true
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        "200":
+          description: "The total count of customers."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of customers."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /customers/{id}:
+    get:
+      summary: Get a specific customer
+      description: "Retrieves a single customer by ID."
+      operationId: getCustomerById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the customer to return."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of properties to include."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Customer details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Customer not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier of the customer."
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp when the customer was created."
+        trade:
+          type: boolean
+          description: "Indicates whether the customer is a trade customer."
+        tradeGroupId:
+          type: integer
+          description: "ID of the trade group the customer belongs to."
+        active:
+          type: boolean
+          description: "Indicates whether the customer account is active."
+        adminCreated:
+          type: boolean
+          description: "Whether the customer account was created by an admin."
+        autoCreated:
+          type: boolean
+          description: "Whether the customer account was created automatically."
+        credit:
+          type: boolean
+          description: "Indicates if the trade customer has a credit account."
+        discount:
+          type: number
+          format: float
+          description: "Trade discount percentage for the customer."
+        costPriceMultiplier:
+          type: number
+          format: float
+          description: "Cost price multiplier for trade customers."
+        firstName:
+          type: string
+          description: "Customer's first name."
+        lastName:
+          type: string
+          description: "Customer's last name."
+        companyName:
+          type: string
+          description: "Company name."
+        email:
+          type: string
+          format: email
+          description: "Customer's email address."
+        phone:
+          type: string
+          description: "Customer's phone number."
+        mobilePhone:
+          type: string
+          description: "Customer's mobile phone number."
+        website:
+          type: string
+          description: "Customer's website URL."
+        vatNumber:
+          type: string
+          description: "Customer's VAT registration number."
+        acceptsMarketing:
+          type: boolean
+          description: "Whether the customer accepts marketing."
+        addressLine1:
+          type: string
+          description: "First line of the address."
+        addressLine2:
+          type: string
+          description: "Second line of the customer's address."
+        addressLine3:
+          type: string
+          description: "Third line of the customer's address."
+        city:
+          type: string
+          description: "Customer's city."
+        province:
+          type: string
+          description: "Customer's county or province (non-US)."
+        postcode:
+          type: string
+          description: "Customer's postcode."
+        notes:
+          type: string
+          description: "Internal notes about the customer."
+        additionalData:
+          type: object
+          description: "Additional custom data fields for trade customers."
+          properties:
+            "0":
+              type: string
+            "1":
+              type: string
+            "2":
+              type: string
+            "3":
+              type: string
+            "4":
+              type: string
+        rewardPoints:
+          type: integer
+          description: "Customer's reward points balance."
+        country:
+          type: object
+          description: "The customer's country."
+          properties:
+            id:
+              type: integer
+              description: "Country identifier."
+            name:
+              type: string
+              description: "Country name."
+            iso:
+              type: string
+              description: "ISO 3166-1 alpha-2 country code."
+
+        state:
+          type: object
+          description: "The customer's state or region. Empty outside the US."
+          properties:
+            id:
+              type: integer
+              description: "State or region identifier (0 outside the US)."
+            name:
+              type: string
+              description: "Name of the state."
+        wishlists:
+           type: object
+           description: "The customer's wishlists."
+           properties: 
+             id:
+               type: integer
+               description: "The wishlist ID."
+             token:
+               type: integer
+               description: "The wishlist token."
+             public:
+               type: boolean
+               description: "Returns true if the wishlist is public."             
+
+    CustomerCreate:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - password
+      properties:
+        firstName:
+          type: string
+          description: "The customer's first name."
+        lastName:
+          type: string
+          description: "The customer's last name."
+        email:
+          type: string
+          format: email
+          description: "The customer's email address."
+        password:
+          type: string
+          description: "Password for the customer's account."
+        trade:
+          type: boolean
+          description: "Indicates whether the customer is a trade customer."
+        tradeGroupId:
+          type: integer
+          description: "The ID of the trade group the customer belongs to, only for trade customers."
+        active:
+          type: boolean
+          description: "Indicates whether the customer account is active, only for trade customers."
+        credit:
+          type: boolean
+          description: "Indicates if the trade customer has a credit account, only for trade customers."
+        discount:
+          type: number
+          format: float
+          description: "Global discount percentage for the trade customer's account, only for trade customers."
+        costPriceMultiplier:
+          type: number
+          format: float
+          description: "Cost price multiplier for the trade customer, only for trade customers."
+        companyName:
+          type: string
+          description: "Company name associated with the customer account."
+        phone:
+          type: string
+          description: "The customer's primary phone number."
+        mobilePhone:
+          type: string
+          description: "The customer's mobile phone number, only for trade customers."
+        website:
+          type: string
+          description: "The customer's website URL, only for trade customers."
+        vatNumber:
+          type: string
+          description: "The customer's VAT registration number, only for trade customers."
+        acceptsMarketing:
+          type: boolean
+          description: "Indicates whether the customer accepts marketing communications."
+        addressLine1:
+          type: string
+          description: "The first line of the customer's address."
+        addressLine2:
+          type: string
+          description: "The second line of the customer's address."
+        addressLine3:
+          type: string
+          description: "The third line of the customer's address."
+        city:
+          type: string
+          description: "The customer's city."
+        province:
+          type: string
+          description: "The customer's county or province (non-US only)."
+        postcode:
+          type: string
+          description: "The customer's postcode."
+        country:
+          type: integer
+          description: "The customer's country code."
+        state:
+          type: integer
+          description: "The customer's state code (US only)."
+        notes:
+          type: string
+          description: "Internal notes about the customer."
+        additionalData:
+          type: object
+          description: "Additional custom data fields, only for trade customers."
+          properties:
+            "0":
+              type: string
+              description: "Custom additional data field."
+            "1":
+              type: string
+              description: "Custom additional data field."
+            "2":
+              type: string
+              description: "Custom additional data field."
+            "3":
+              type: string
+              description: "Custom additional data field."
+            "4":
+              type: string
+              description: "Custom additional data field."
+        rewardPoints:
+          type: integer
+          description: "The customer's reward points balance."

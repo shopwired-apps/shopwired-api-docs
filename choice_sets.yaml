@@ -1,0 +1,214 @@
+openapi: 3.1.0
+info:
+  title: Choice Sets
+  description: API endpoints for managing choice sets.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /choice-sets:
+    get:
+      summary: List choice sets
+      description: "Retrieves all choice sets."
+      operationId: listChoiceSets
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "The maximum number of results to be returned."
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: "The starting position for the returned values."
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to internal name if not specified."
+          required: false
+          schema:
+            type: string
+            enum: ["name", "name_desc"]
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of choice sets."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChoiceSet"
+
+    post:
+      summary: Create a choice set
+      description: "Creates a new choice set."
+      operationId: createChoiceSet
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChoiceSetCreate"
+      responses:
+        "201":
+          description: "Choice set created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChoiceSet"
+
+  /choice-sets/{id}:
+    get:
+      summary: Get a choice set
+      description: "Retrieves a single choice set by ID."
+      operationId: getChoiceSetById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the choice set."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Choice set details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChoiceSet"
+
+    put:
+      summary: Update a choice set
+      description: "Updates an existing choice set."
+      operationId: updateChoiceSet
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the choice set to update."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChoiceSetUpdate"
+      responses:
+        "200":
+          description: "Choice set updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChoiceSet"
+
+    delete:
+      summary: Delete a choice set
+      description: "Deletes an existing choice set."
+      operationId: deleteChoiceSet
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the choice set to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Choice set deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ChoiceSet:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the choice set."
+        displayName:
+          type: string
+          description: "The name of the choice set displayed on the front-end website."
+        internalName:
+          type: string
+          description: "The internal name of the choice set used by site administrators."
+        values:
+          type: array
+          description: "List of choice set values."
+          items:
+            $ref: "#/components/schemas/ChoiceSetValue"
+
+    ChoiceSetCreate:
+      type: object
+      required:
+        - displayName
+        - internalName
+      properties:
+        displayName:
+          type: string
+          description: "The name for the choice set displayed on the front-end website."
+        internalName:
+          type: string
+          description: "The internal name for the choice set used to distinguish it from other sets."
+
+    ChoiceSetUpdate:
+      type: object
+      properties:
+        displayName:
+          type: string
+          description: "The updated display name for the choice set."
+        internalName:
+          type: string
+          description: "The updated internal name for the choice set."
+
+    ChoiceSetValue:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the choice set value."
+        name:
+          type: string
+          description: "The name of the choice set value."
+        price:
+          type: number
+          format: float
+          description: "The price associated with the choice set value."
+        costPrice:
+          type: number
+          format: float
+          description: "The cost price associated with the choice set value."
+        sortOrder:
+          type: integer
+          description: "The position of the choice set value in sorted lists."

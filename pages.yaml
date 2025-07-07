@@ -1,0 +1,302 @@
+openapi: 3.1.0
+info:
+  title: Website Pages
+  description: API endpoints for managing pages through ShopWired.
+  version: "1.1.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /pages:
+    get:
+      summary: List pages
+      description: "Retrieves a list of pages with pagination."
+      operationId: listPages
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to no sorting."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+            example: "created_desc"
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of pages."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Page"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new page
+      description: "Creates a new page."
+      operationId: createPage
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageCreate"
+      responses:
+        "201":
+          description: "Page created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Page"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /pages/count:
+    get:
+      summary: Get total page count
+      description: "Retrieves the total number of pages."
+      operationId: getPageCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of pages."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of pages."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /pages/{id}:
+    get:
+      summary: Get a specific page
+      description: "Retrieves a single page by ID."
+      operationId: getPageById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the page."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The page details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Page"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Page not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a page
+      description: "Updates an existing page by ID."
+      operationId: updatePage
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the page."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageUpdate"
+      responses:
+        "200":
+          description: "Page updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Page"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Page not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a page
+      description: "Deletes an existing page by ID."
+      operationId: deletePage
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the page."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Page deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Page not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Page:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the page."
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp when the page was created."
+        title:
+          type: string
+          description: "The name/title of the page."
+        slug:
+          type: string
+          description: "The URL slug for the page."
+        url:
+          type: string
+          description: "The full URL for the page."
+        metaTitle:
+          type: string
+          description: "The title tag for the page."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the page."
+        metaDescription:
+          type: string
+          description: "The meta description for the page."
+
+    PageCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: "The name/title of the page."
+        slug:
+          type: string
+          description: "The URL slug for the page (without domain)."
+        metaTitle:
+          type: string
+          description: "The title tag for the page."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the page."
+        metaDescription:
+          type: string
+          description: "The meta description for the page."
+        content:
+          type: string
+          description: "The content for the page."
+        customContent:
+          type: string
+          description: "Additional content for the page."
+
+    PageUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: "The name/title of the page."
+        slug:
+          type: string
+          description: "The URL slug for the page (without domain)."
+        metaTitle:
+          type: string
+          description: "The title tag for the page."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the page."
+        metaDescription:
+          type: string
+          description: "The meta description for the page."
+        content:
+          type: string
+          description: "The content for the page."
+        customContent:
+          type: string
+          description: "Additional content for the page."

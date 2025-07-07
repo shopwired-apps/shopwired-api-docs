@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  title: Order Statuses
+  description: API endpoint for retrieving, creating, and deleting order statuses.
+  version: "1.0.3"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /order-statuses:
+    get:
+      summary: List order statuses
+      description: "Retrieves a list of order statuses with pagination."
+      operationId: listOrderStatuses
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "The maximum number of results to be returned."
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: "The starting position for the returned values."
+          required: false
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of order statuses."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrderStatus"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+    post:
+      summary: Create an order status
+      description: "Creates a new order status."
+      operationId: createOrderStatus
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusCreate"
+      responses:
+        "201":
+          description: "Order status created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderStatus"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /order-statuses/{id}:
+    delete:
+      summary: Delete an order status
+      description: "Deletes an existing order status by ID."
+      operationId: deleteOrderStatus
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the order status."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Order status deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Order status not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    OrderStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "The ID of the order status."
+        name:
+          type: string
+          description: "The name of the order status."
+        type:
+          type: string
+          description: "The type of order status, corresponding to the order status' assignment to ShopWired's default order status."
+          enum: [paid, unpaid, cancelled, shipped, pre-order, custom]
+        sortOrder:
+          type: integer
+          description: "The position of the order status in the sort order."
+
+    OrderStatusCreate:
+      type: object
+      required:
+        - name
+        - sortOrder
+      properties:
+        name:
+          type: string
+          description: "The name of the order status."
+        sortOrder:
+          type: integer
+          description: "The position of the order status in the sort order."

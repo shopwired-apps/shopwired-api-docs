@@ -1,0 +1,246 @@
+openapi: 3.1.0
+info:
+  title: Wishlists
+  description: API endpoints for managing wishlists.
+  version: "1.0.5"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /wishlists:
+    get:
+      summary: List wishlists
+      description: "Retrieves a list of wishlists."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: customer_id
+          in: query
+          description: "Filter by the unique ID of the customer."
+          required: false
+          schema:
+            type: string
+        - name: count
+          in: query
+          description: "The maximum number of results to be returned."
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: "The starting position for the returned values."
+          required: false
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of properties to embed. Available value: 'items'."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of wishlists."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Wishlist"
+
+    post:
+      summary: Create a wishlist
+      description: "Creates a new wishlist."
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - customerId
+              properties:
+                customerId:
+                  type: string
+                  description: "The unique ID of the customer that the wishlist belongs to."
+                public:
+                  type: boolean
+                  description: "True if the wishlist is publicly visible."
+      responses:
+        "201":
+          description: "Wishlist created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wishlist"
+
+  /wishlists/count:
+    get:
+      summary: Count wishlists
+      description: "Retrieves the total count of wishlists."
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of wishlists."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "Count of wishlists."
+
+  /wishlists/{id}:
+    get:
+      summary: Get a specific wishlist
+      description: "Retrieves a single wishlist by ID."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of properties to embed. Available value: 'items'."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The wishlist details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wishlist"
+
+    put:
+      summary: Update a wishlist
+      description: "Updates an existing wishlist."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - public
+              properties:
+                public:
+                  type: boolean
+                  description: "True if the wishlist is publicly visible."
+      responses:
+        "200":
+          description: "Wishlist updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wishlist"
+
+  /wishlists/{id}/modify:
+    post:
+      summary: Modify a wishlist
+      description: "Modifies a wishlist by adding, removing, or clearing items."
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [add_items, remove_items, clear]
+                  description: "The type of action used to modify the wishlist."
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      productId:
+                        type: integer
+                        description: "The product ID to add or remove."
+                      comment:
+                        type: string
+                        description: "Optional comment for the wishlist item."
+                  description: "An array of product objects. Each object may contain a productId and an optional comment."
+      responses:
+        "200":
+          description: "Wishlist modified successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wishlist"
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Wishlist:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The unique ID of the wishlist."
+        customerId:
+          type: string
+          description: "The unique ID of the customer that the wishlist belongs to."
+        token:
+          type: string
+          description: "A string of characters used to identify public wishlists."
+        public:
+          type: boolean
+          description: "True if the wishlist is publicly visible."
+        items:
+          type: array
+          description: "The items currently in the wishlist. Only present when items are embedded."
+          items:
+            type: object
+            properties:
+              productId:
+                type: integer
+                description: "The product ID."
+              comment:
+                type: string
+                description: "Optional comment for the wishlist item."

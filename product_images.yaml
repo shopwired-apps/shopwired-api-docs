@@ -1,0 +1,175 @@
+openapi: 3.1.0
+info:
+  title: Product Images
+  description: API endpoints for managing product images.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /products/{product_id}/images:
+    get:
+      summary: List product images
+      description: "Retrieves a list of product images assigned to a product."
+      operationId: listProductImages
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the images are assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of product images."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductImage"
+
+    post:
+      summary: Create a product image
+      description: "Creates a new product image."
+      operationId: createProductImage
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the image will be assigned to."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductImageCreate"
+      responses:
+        "201":
+          description: "Product image created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductImage"
+
+  /products/{product_id}/images/{id}:
+    put:
+      summary: Update a product image
+      description: "Updates an existing product image."
+      operationId: updateProductImage
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the image to be updated is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product image to update."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductImageUpdate"
+      responses:
+        "200":
+          description: "Product image updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductImage"
+
+    delete:
+      summary: Delete a product image
+      description: "Deletes an existing product image."
+      operationId: deleteProductImage
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the image to be deleted is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product image to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Product image deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ProductImage:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Product image ID."
+        url:
+          type: string
+          description: "Product image URL."
+        description:
+          type: string
+          description: "The ALT tag for the product image."
+        sortOrder:
+          type: integer
+          description: "Product image sort order."
+
+    ProductImageCreate:
+      type: object
+      required:
+        - image
+      properties:
+        image:
+          type: string
+          description: "URL or base64 encoded image."
+        imageName:
+          type: string
+          description: "The file name for the image."
+        description:
+          type: string
+          description: "The ALT tag for the product image."
+        sortOrder:
+          type: integer
+          description: "The sort order for the product image."
+
+    ProductImageUpdate:
+      type: object
+      properties:
+        description:
+          type: string
+          description: "The updated ALT tag for the image."
+        sortOrder:
+          type: integer
+          description: "The updated sort order for the product image."

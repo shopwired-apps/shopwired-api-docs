@@ -1,0 +1,1068 @@
+openapi: 3.1.0
+info:
+  title: Orders
+  description: API endpoints for managing orders.
+  version: "1.0.7"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /orders:
+    get:
+      summary: List orders
+      description: "Retrieves a list of orders with optional filters and pagination."
+      operationId: listOrders
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: ids
+          in: query
+          description: "Comma-separated list of specific order IDs to return (maximum 50)."
+          required: false
+          schema:
+            type: string
+        - name: archived
+          in: query
+          description: "Specify 0 for non-archived orders, 1 for archived orders."
+          required: false
+          schema:
+            type: integer
+            enum: [0, 1]
+        - name: status
+          in: query
+          description: "The ID of the order status."
+          required: false
+          schema:
+            type: integer
+        - name: from
+          in: query
+          description: "Return orders created after this UNIX timestamp."
+          required: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          description: "Return orders created before this UNIX timestamp."
+          required: false
+          schema:
+            type: string
+        - name: count
+          in: query
+          description: "Number of records to retrieve."
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: "Sort order."
+          required: false
+          schema:
+            type: string
+            enum: ["date", "date_desc"]
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Possible values: `admin_comments`, `file_archives`, `bundle_products`, `custom_fields`, `custom_product_fields`, `sales_tax`, `sales_tax_info`, `sales_tax_breakdown`."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of orders."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new order
+      description: "Creates a new order."
+      operationId: createOrder
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderCreate"
+      responses:
+        "201":
+          description: "Order created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: "Invalid request body."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /orders/search:
+    get:
+      summary: Search for orders
+      description: "Retrieves orders based on a keyword search."
+      operationId: searchOrders
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: keywords
+          in: query
+          description: "Keyword(s) to search for (e.g., order reference, customer name)."
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: "Sort order."
+          required: false
+          schema:
+            type: string
+            enum: ["score", "title_asc", "title_desc"]
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+        - name: count
+          in: query
+          description: "Number of records to retrieve."
+          required: false
+          schema:
+            type: integer
+        - name: session_id
+          in: query
+          description: "Ensures consistent search results in subsequent calls."
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "A list of orders that match the search."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /orders/count:
+    get:
+      summary: Get order count
+      description: "Retrieves the total number of orders, optionally filtered by parameters."
+      operationId: getOrderCount
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: archived
+          in: query
+          description: "Specify 0 for non-archived orders, 1 for archived orders."
+          required: false
+          schema:
+            type: integer
+            enum: [0, 1]
+        - name: status
+          in: query
+          description: "The ID of the order status."
+          required: false
+          schema:
+            type: integer
+        - name: from
+          in: query
+          description: "Count orders created after this UNIX timestamp."
+          required: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          description: "Count orders created before this UNIX timestamp."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The total count of orders."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "Number of orders in total."
+                    example: 355
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /orders/{id}:
+    get:
+      summary: Get an order by ID
+      description: "Retrieves a single order by its ID."
+      operationId: getOrder
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the order."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Possible values: `admin_comments`, `file_archives`, `bundle_products`, `custom_fields`, `custom_product_fields`, `sales_tax`, `sales_tax_info`, `sales_tax_breakdown`."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Details of a single order."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Order not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete an order
+      description: "Deletes an existing order by its ID."
+      operationId: deleteOrder
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the order to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Order deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Order not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Order:
+      type: object
+      description: "Represents a single order record."
+      properties:
+        id:
+          type: integer
+          description: "Returns the unique identifier of the order."
+        reference:
+          type: integer
+          description: "Returns the order reference number."
+        created:
+          type: string
+          description: "Returns the creation date of the order."
+        archived:
+          type: boolean
+          description: "Returns true if the order is archived."
+        anonymized:
+          type: boolean
+          description: "Returns true if the order is anonymized."
+        trackingUrl:
+          type: string
+          description: "Returns the tracking URL associated with the order."
+        status:
+          type: object
+          description: "Returns the status object of the order."
+          properties:
+            id:
+              type: integer
+              description: "Returns the unique ID of the order status."
+            name:
+              type: string
+              description: "Returns the name of the status."
+            type:
+              type: string
+              description: "Returns the type of the status, e.g., 'paid'."
+            sortOrder:
+              type: integer
+              description: "Returns the sort order of the status."
+        billingAddress:
+          type: object
+          description: "Returns the billing address for the order."
+          properties:
+            name:
+              type: string
+              description: "Returns the billing name."
+            emailAddress:
+              type: string
+              description: "Returns the billing email address."
+            telephone:
+              type: string
+              description: "Returns the billing telephone number."
+            companyName:
+              type: string
+              description: "Returns the billing company name."
+            addressLine1:
+              type: string
+              description: "Returns the first line of the billing address."
+            addressLine2:
+              type: string
+              description: "Returns the second line of the billing address."
+            addressLine3:
+              type: string
+              description: "Returns the third line of the billing address."
+            city:
+              type: string
+              description: "Returns the billing city."
+            province:
+              type: string
+              description: "Returns the billing state/county (not available for US orders)."
+            state:
+              type: string
+              description: "Returns the billing state (only available for US orders)."
+            postcode:
+              type: string
+              description: "Returns the billing postcode."
+            country:
+              type: string
+              description: "Returns the billing country."
+            countryId:
+              type: integer
+              description: "Returns the country ID for the billing address."
+        shippingAddress:
+          type: object
+          description: "Returns the shipping address for the order."
+          properties:
+            name:
+              type: string
+              description: "Returns the shipping name."
+            emailAddress:
+              type: string
+              description: "Returns the shipping email address."
+            telephone:
+              type: string
+              description: "Returns the shipping telephone number."
+            companyName:
+              type: string
+              description: "Returns the shipping company name."
+            addressLine1:
+              type: string
+              description: "Returns the first line of the shipping address."
+            addressLine2:
+              type: string
+              description: "Returns the second line of the shipping address."
+            addressLine3:
+              type: string
+              description: "Returns the third line of the shipping address."
+            city:
+              type: string
+              description: "Returns the shipping city."
+            province:
+              type: string
+              description: "Returns the delivery state/county (not available for US orders)."
+            state:
+              type: string
+              description: "Returns the shipping state (only available for US orders)."
+            postcode:
+              type: string
+              description: "Returns the shipping postcode."
+            country:
+              type: string
+              description: "Returns the shipping country."
+            countryId:
+              type: integer
+              description: "Returns the country ID for the shipping address."
+        paymentMethod:
+          type: string
+          description: "Returns the payment method used for the order (if available)."
+        total:
+          type: number
+          description: "Returns the grand total value of the order."
+        subTotal:
+          type: number
+          description: "Returns the subtotal of the order."
+        shippingTotal:
+          type: number
+          description: "Returns the total shipping cost for the order."
+        originalShippingTotal:
+          type: number
+          description: "Returns the original shipping cost before discounts."
+        partialPaymentTotal:
+          type: number
+          description: "Returns the total of any partial payments applied."
+        tax:
+          type: object
+          description: "Returns the tax information for the order."
+          properties:
+            type:
+              type: string
+              description: "Returns the tax type."
+            value:
+              type: number
+              description: "Returns the tax value."
+        discounts:
+          type: array
+          description: "Returns an array of discounts applied to the order."
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name of the discount."
+              value:
+                type: number
+                description: "The value of the discount applied."
+              type:
+                type: string
+                description: "The type of discount (e.g., 'voucher')."
+              code:
+                type: string
+                description: "The discount code used, if applicable."
+              voucherId:
+                type: integer
+                description: "The unique identifier for the voucher, if applicable."
+              offerId:
+                type: integer
+                description: "The ID of the special offer, if the discount is offer-based."
+        fees:
+          type: array
+          description: "Returns an array of transaction fees applied to the order (not ShopWired Payments processing fees)."
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name of the transaction fee."
+              value:
+                type: number
+                description: "The value of the fee applied."
+              type:
+                type: string
+                description: "The type of fee (e.g. 'payment_gateway')."
+        shipping:
+          type: array
+          description: "Returns an array of shipping options for the order."
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "Returns the name of the shipping option."
+              value:
+                type: number
+                description: "Returns the value of the shipping option."
+              vatRate:
+                type: number
+                description: "Returns the VAT rate for the shipping option."
+              id:
+                type: integer
+                description: "Returns the ID of the shipping option."
+        refunds:
+          type: array
+          description: "Returns an array of refunds applied to the order."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "The unique identifier of the refund."
+              created:
+                type: string
+                description: "The creation date/time of the refund."
+              name:
+                type: string
+                description: "A label or reference for the refund."
+              value:
+                type: number
+                description: "The value (amount) of the refund."
+        products:
+          type: array
+          description: "Returns an array of products included in the order."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "Returns the unique identifier of the product."
+              itemId:
+                type: integer
+                description: "Returns the item ID of the product."
+              title:
+                type: string
+                description: "Returns the title of the product."
+              sku:
+                type: string
+                description: "Returns the SKU code of the product."
+              gtin:
+                type: string
+                description: "Returns the GTIN (Global Trade Item Number) of the product."
+              mpn:
+                type: string
+                description: "Returns the MPN (Manufacturer Part Number) of the product."
+              price:
+                type: number
+                description: "Returns the price of the product, excluding VAT."
+              priceVat:
+                type: number
+                description: "Returns the VAT amount applicable to the product price."
+              total:
+                type: number
+                description: "Returns the total price of the product, excluding VAT."
+              totalVat:
+                type: number
+                description: "Returns the total VAT amount applicable to the product."
+              originalPrice:
+                type: number
+                description: "Returns the original price of the product before any discounts."
+              quantity:
+                type: integer
+                description: "Returns the quantity of the product ordered."
+              extras:
+                type: array
+                description: "Returns any extras added to the product."
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: "The name of the extra."
+                    value:
+                      type: number
+                      description: "The price of the extra, excluding VAT."
+              choices:
+                type: array
+                description: "Returns the choices selected for the product."
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: "The name of the choice."
+                    value:
+                      type: string
+                      description: "The value selected for the choice."
+              variation:
+                type: array
+                description: "Returns the variations applicable to the product."
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: "The name of the variation (e.g., 'Size')."
+                    value:
+                      type: string
+                      description: "The value selected for the variation (e.g., 'S')."
+              vatRate:
+                type: number
+                description: "Returns the VAT rate applied to the product."
+              weight:
+                type: number
+                description: "Returns the weight of the product."
+              rewardPointsEarned:
+                type: integer
+                description: "Returns the number of reward points earned for the product."
+              comments:
+                type: string
+                description: "Returns any comments associated with the product."
+              giftVoucher:
+                type: boolean
+                description: "Returns true if the product is a gift voucher."
+              warehouseNotes:
+                type: string
+                description: "Returns any notes related to the product from the warehouse."
+              bundleProducts:
+                type: array
+                description: "Returns the constituent products of a bundle product. Only present when bundle_products is embedded."
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: "The name of the constituent product."
+                    sku:
+                      type: string
+                      description: "The SKU code of the constituent product."
+              customFields:
+                type: array
+                description: "Returns custom fields associated with the product. Only present when custom_product_fields is embedded."
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: "The name of the custom field."
+                    value:
+                      type: string
+                      description: "The value associated with the custom field name."
+              preOrder:
+                type: boolean
+                description: "Returns true if the product is a pre-order."
+              costPrice:
+                type: number
+                description: "Returns the merchant's cost price for this product."
+              hsCode:
+                type: string
+                description: "Returns the product's HS (Harmonised System) code, if applicable."
+        comments:
+          type: string
+          description: "Returns any comments associated with the order."
+        totalWeight:
+          type: string
+          description: "Returns the total weight of items in the order."
+        weightUnit:
+          type: string
+          description: "Returns the unit of weight measurement."
+        marketing:
+          type: boolean
+          description: "Returns true if the customer accepted marketing."
+        customer:
+          type: object
+          description: "Returns information about the customer who created the order."
+          properties:
+            id:
+              type: integer
+              description: "Returns the ID of the customer."
+            type:
+              type: integer
+              description: "Returns the type/category of the customer."
+            dateOfBirth:
+              type: string
+              description: "Returns the customer's date of birth."
+            deviceInfo:
+              type: object
+              description: "Returns device/browser details for the customer."
+              properties:
+                ipAddress:
+                  type: string
+                  description: "Returns the IP address of the customer's device."
+                userAgent:
+                  type: string
+                  description: "Returns the User-Agent header from the customer's browser."
+                facebookBrowserId:
+                  type: string
+                  description: "Returns the Facebook browser ID, if available."
+                facebookClickId:
+                  type: string
+                  description: "Returns the Facebook click ID, if available."
+        partialPayments:
+          type: array
+          description: "Returns an array of partial payments applied to the order, such as gift vouchers."
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: "The type of partial payment (e.g., 'gift_voucher')."
+              value:
+                type: number
+                description: "The value of the partial payment."
+              data:
+                type: string
+                description: "Additional data associated with the partial payment, such as a voucher code."
+        invoiceUrl:
+          type: string
+          description: "Returns the URL where the invoice can be accessed."
+        earnedRewardPoints:
+          type: number
+          description: "Returns the number of reward points earned for the order."
+        preOrder:
+          type: boolean
+          description: "Returns true if the order is a pre-order."
+        referrerId:
+          type: integer
+          description: "Returns the ID of the referrer, if applicable."
+        adminComments:
+          type: array
+          description: "Returns comments added through the admin system. Only available when admin_comments is embedded."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "Returns the ID of the admin comment."
+              created:
+                type: string
+                description: "Returns the creation date of the admin comment."
+              content:
+                type: string
+                description: "Returns the content of the admin comment."
+              status_id:
+                type: integer
+                description: "Always returns 0 for the admin comment."
+        fileArchives:
+          type: array
+          description: "Returns an array of file archives associated with the order. Only present when file_archives are embedded."
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+                description: "The title of the file archive."
+              url:
+                type: string
+                description: "The URL where the file archive can be accessed."
+        lineItemVatCalculation:
+          type: boolean
+          description: "Returns true if VAT was calculated based on the total quantity of a line item."
+        transactionId:
+          type: string
+          description: "Returns the transaction ID connected to the order (if available)."
+        packageWeight:
+          type: string
+          description: "Returns the package weight if it differs from the totalWeight."
+        customerSource:
+          type: string
+          description: "Returns how the customer originally found the store (e.g., 'Newspaper')."
+
+    OrderCreate:
+      type: object
+      description: "Represents the payload used to create a new order."
+      required:
+        - status
+        - billingAddress
+        - shippingAddress
+        - shippingRate
+        - products
+      properties:
+        reference:
+          type: integer
+          description: "The business account's reference for the order (order ID). If a reference is specified, it must be unique (an error will not be returned if the reference supplied is not unique)."
+
+        archived:
+          type: boolean
+          description: "Whether the order is archived."
+
+        trackingUrl:
+          type: string
+          description: "Usually a tracking URL for the shipment but can relate to anything."
+
+        status:
+          type: integer
+          description: "The ID of the status of the order."
+
+        billingAddress:
+          type: object
+          description: "The order's billing address. Where the country is USA, the province field will be substituted with state."
+          required:
+            - name
+            - emailAddress
+            - addressLine1
+            - city
+            - postcode
+            - country
+          properties:
+            name:
+              type: string
+              description: "Returns the billing name."
+            emailAddress:
+              type: string
+              description: "Returns the billing email address."
+            telephone:
+              type: string
+              description: "Returns the billing telephone number."
+            companyName:
+              type: string
+              description: "Returns the billing company name."
+            addressLine1:
+              type: string
+              description: "Returns the first line of the billing address."
+            addressLine2:
+              type: string
+              description: "Returns the second line of the billing address."
+            addressLine3:
+              type: string
+              description: "Returns the third line of the billing address."
+            city:
+              type: string
+              description: "Returns the billing city."
+            postcode:
+              type: string
+              description: "Returns the billing postcode."
+            province:
+              type: string
+              description: "Returns the billing state/county (not available for US orders)."
+            country:
+              type: string
+              description: "Returns the billing country."
+
+        shippingAddress:
+          type: object
+          description: "The order's shipping address. Where the country is USA, the province field will be substituted with state."
+          required:
+            - name
+            - emailAddress
+            - addressLine1
+            - city
+            - postcode
+            - country
+          properties:
+            name:
+              type: string
+              description: "Returns the shipping name."
+            emailAddress:
+              type: string
+              description: "Returns the shipping email address."
+            telephone:
+              type: string
+              description: "Returns the shipping telephone number."
+            companyName:
+              type: string
+              description: "Returns the shipping company name."
+            addressLine1:
+              type: string
+              description: "Returns the first line of the shipping address."
+            addressLine2:
+              type: string
+              description: "Returns the second line of the shipping address."
+            addressLine3:
+              type: string
+              description: "Returns the third line of the shipping address."
+            city:
+              type: string
+              description: "Returns the shipping city."
+            postcode:
+              type: string
+              description: "Returns the shipping postcode."
+            province:
+              type: string
+              description: "Returns the delivery state/county (not available for US orders)."
+            country:
+              type: string
+              description: "Returns the shipping country."
+
+        paymentMethod:
+          type: string
+          description: "The payment method of the order (e.g., PayPal, SagePay, eBay, Amazon)."
+
+        total:
+          type: number
+          description: "The grand total of the order (including shipping)."
+
+        subTotal:
+          type: number
+          description: "The products subtotal for the order (excluding discounts). If tax is charged, it should be excluding tax."
+
+        shippingTotal:
+          type: number
+          description: "The total cost of shipping after any shipping discounts were applied."
+
+        originalShippingTotal:
+          type: number
+          description: "The total cost of shipping before any shipping discounts were applied."
+
+        partialPaymentTotal:
+          type: number
+          description: "The total amount of partial payments (e.g., gift vouchers or reward points) made on the order."
+
+        tax:
+          type: object
+          description: "The total tax on the order (products and shipping tax)."
+          properties:
+            type:
+              type: string
+              description: "Returns the tax type."
+            value:
+              type: number
+              description: "Returns the tax value."
+
+        discounts:
+          type: array
+          description: "Any discounts received on the order."
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name of the discount."
+              value:
+                type: number
+                description: "The value of the discount applied."
+              type:
+                type: string
+                description: "The type of discount (e.g., 'voucher')."
+              code:
+                type: string
+                description: "The discount code used, if applicable."
+              voucherId:
+                type: integer
+                description: "The unique identifier for the voucher, if applicable."
+              offerId:
+                type: integer
+                description: "The ID of the special offer, if the discount is offer-based."
+
+        fees:
+          type: array
+          description: "The transaction fee(s) on the order."
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name of the transaction fee."
+              value:
+                type: number
+                description: "The value of the fee."
+              type:
+                type: string
+                description: "The type of fee (e.g., payment_gateway)."
+
+        shippingRate:
+          type: integer
+          description: "The ID of the shipping rate used for the order."
+
+        postcode:
+          type: string
+          description: "The postcode for the order applicable to the delivery rate (UK orders only where postcode shipping is enabled)."
+
+        refunds:
+          type: array
+          description: "Any refunds applied to the order."
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "A label or reference for the refund."
+              value:
+                type: number
+                description: "The amount of the refund."
+
+        products:
+          type: array
+          description: "The products ordered. If tax is charged, the price should be listed without tax."
+          items:
+            type: object
+            required:
+              - id
+              - quantity
+            properties:
+              id:
+                type: integer
+                description: "The ID of the product ordered."
+              quantity:
+                type: integer
+                description: "The quantity of this product."
+              variation:
+                type: integer
+                description: "The ID of the product variation ordered (if applicable)."
+              extras:
+                type: array
+                description: "An array of IDs for any product extras that were ordered."
+                items:
+                  type: integer
+                  description: "An extra's unique identifier."
+              choices:
+                type: array
+                description: "An array of IDs for any product choices selected."
+                items:
+                  type: integer
+                  description: "A single choice value ID."
+              price:
+                type: number
+                description: "The price of the product, excluding tax."
+              comments:
+                type: string
+                description: "Additional comments for this product."
+
+        totalWeight:
+          type: string
+          description: "Total weight of items in the order."
+
+        acceptsMarketing:
+          type: boolean
+          description: "Whether the customer accepts marketing."
+
+        comments:
+          type: string
+          description: "Any additional comments attached to the order."
+
+        customer:
+          type: object
+          description: "Details of the customer placing the order."
+          properties:
+            id:
+              type: integer
+              description: "The unique identifier for the customer."
+
+        deliveryDate:
+          type: string
+          description: "The delivery date requested by the customer."
+
+        transactionId:
+          type: string
+          description: "The transaction ID returned by the payment gateway (Note: not all gateways return a transaction ID)."
+
+        earnedRewardPoints:
+          type: integer
+          description: "The number of reward points earned by the customer for the order."
+
+        sendEmails:
+          type: boolean
+          description: "Whether to send an order confirmation email to the customer."
+        
+        externalFulfillment:
+          type: object
+          description: "The fulfillment centre that should be assigned to the order."
+          properties:
+            reference:
+              type: string
+              maxLength: 64
+              description: "The reference of the fulfillment centre."
+            fulfillmentCenterId:
+              type: integer
+              description: "The ID of the fulfillment centre."

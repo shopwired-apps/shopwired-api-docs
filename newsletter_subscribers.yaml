@@ -1,0 +1,137 @@
+openapi: 3.1.0
+info:
+  title: Newsletter subscribers
+  description: API endpoints for managing newsletter subscribers.
+  version: "1.1.0"
+  
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /newsletter-subscribers:
+    get:
+      summary: List newsletter subscribers
+      description: "Retrieves a list of newsletter subscribers with pagination."
+      operationId: listNewsletterSubscribers
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to no sorting."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of newsletter subscribers."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsletterSubscriber"
+
+  /newsletter-subscribers/{id}:
+    get:
+      summary: Get a specific newsletter subscriber
+      description: "Retrieves a single newsletter subscriber by ID."
+      operationId: getNewsletterSubscriber
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The ID of the subscriber."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+          example: "id,emailAddress,createdAt"
+      responses:
+        "200":
+          description: "The subscriber data."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsletterSubscriber"
+        "404":
+          description: "Subscriber not found."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    NewsletterSubscriber:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the subscriber."
+        name:
+          type: string
+          description: "Name of the subscriber."
+        emailAddress:
+          type: string
+          format: email
+          description: "Email address of the subscriber."
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp when the subscriber was created."
+
+    NewsletterSubscriberCreate:
+      type: object
+      required:
+        - emailAddress
+      properties:
+        name:
+          type: string
+          description: "Name of the subscriber."
+        emailAddress:
+          type: string
+          format: email
+          description: "Email address of the subscriber."
+
+    NewsletterSubscriberUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Name of the subscriber."
+        emailAddress:
+          type: string
+          format: email
+          description: "Updated email address of the subscriber."

@@ -1,0 +1,205 @@
+openapi: 3.1.0
+info:
+  title: Product Options
+  description: API endpoints for managing product options.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /products/{product_id}/options:
+    get:
+      summary: List product options
+      description: "Retrieves a list of product options assigned to a product."
+      operationId: listProductOptions
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the options are assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available value: 'product_option_values'."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of product options."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductOption"
+
+    post:
+      summary: Create a product option
+      description: "Creates a new product option for a specific product."
+      operationId: createProductOption
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the option will be assigned to."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductOptionCreate"
+      responses:
+        "201":
+          description: "Product option created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductOption"
+
+  /products/{product_id}/options/{id}:
+    get:
+      summary: Get a product option
+      description: "Retrieves a specific product option assigned to a product."
+      operationId: getProductOptionById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the option is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product option."
+          required: true
+          schema:
+            type: integer
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available value: 'product_option_values'."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Product option details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductOption"
+
+    put:
+      summary: Update a product option
+      description: "Updates an existing product option."
+      operationId: updateProductOption
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the option is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product option to update."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductOptionUpdate"
+      responses:
+        "200":
+          description: "Product option updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductOption"
+
+    delete:
+      summary: Delete a product option
+      description: "Deletes an existing product option."
+      operationId: deleteProductOption
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the option is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product option to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Product option deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ProductOption:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the product option."
+        name:
+          type: string
+          description: "The name of the product option."
+        values:
+          type: array
+          description: "List of option values."
+          items:
+            $ref: "#/components/schemas/ProductOptionValue"
+
+    ProductOptionCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: "The name of the product option."
+
+    ProductOptionUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The updated name of the product option."
+
+    ProductOptionValue:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the product option value."
+        name:
+          type: string
+          description: "The name of the product option value."

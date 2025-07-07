@@ -1,0 +1,139 @@
+openapi: 3.1.0
+info:
+  title: Orders Status, Comments, Pre-orders
+  description: API endpoints for updating order status, dispatching pre-orders, and managing admin comments.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /orders/{id}/status:
+    post:
+      summary: Update an order's status
+      description: "Updates the status of an order."
+      security:
+        - BasicAuthOAuth2: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the order that the status being updated belongs to."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sendEmail:
+                  type: boolean
+                  description: "Whether to send an order status update email to the customer."
+                status:
+                  type: integer
+                  description: "The new status ID."
+                trackingUrl:
+                  type: string
+                  description: "The new value for the tracking URL field."
+                sendToEbay:
+                  type: boolean
+                  description: "Set to true to send the updated order status to eBay."
+                eBayShippingCarrier:
+                  type: string
+                  description: "The value for the eBay shipping carrier."
+                eBayShipmentTrackingNumber:
+                  type: string
+                  description: "The value for the eBay shipping tracking number."
+      responses:
+        "200":
+          description: "OK"
+
+  /orders/{id}/dispatch-pre-order:
+    post:
+      summary: Request a pre-order be dispatched
+      description: "Requests the dispatch of a pre-order and optionally charges the customer."
+      security:
+        - BasicAuthOAuth2: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the pre-order."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                charge:
+                  type: boolean
+                  description: "Attempt to charge the customer."
+                  required: true
+      responses:
+        "200":
+          description: "OK"
+        "500":
+          description: "Failed to charge customer."
+
+  /orders/{id}/comments:
+    post:
+      summary: Create an order admin comment
+      description: "Adds an admin comment to the specified order."
+      security:
+        - BasicAuthOAuth2: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the order."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: "Content of the admin comment."
+                  required: true
+      responses:
+        "201":
+          description: "Created"
+
+  /orders/{id}/comments/{comment_id}:
+    delete:
+      summary: Delete an order admin comment
+      description: "Deletes an admin comment from the specified order."
+      security:
+        - BasicAuthOAuth2: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the order."
+          required: true
+          schema:
+            type: integer
+        - name: comment_id
+          in: path
+          description: "ID of the admin comment."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "OK"
+
+components:
+  securitySchemes:
+    BasicAuthOAuth2:
+      type: http
+      scheme: basic

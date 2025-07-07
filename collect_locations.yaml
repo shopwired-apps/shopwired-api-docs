@@ -1,0 +1,165 @@
+openapi: 3.1.0
+info:
+  title: Collect Locations
+  description: API endpoints for managing collect locations.
+  version: "1.0.2"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /collect-locations:
+    get:
+      summary: List collect locations
+      description: "Retrieves a list of collect locations with pagination."
+      operationId: listCollectLocations
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of collect locations."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CollectLocation"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /collect-locations/count:
+    get:
+      summary: Get total collect location count
+      description: "Retrieves the total number of collect locations."
+      operationId: getCollectLocationCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of collect locations."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of collect locations."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /collect-locations/{id}:
+    get:
+      summary: Get a specific collect location
+      description: "Retrieves a single collect location by ID."
+      operationId: getCollectLocationById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the collect location."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The collect location details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectLocation"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Collect location not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    CollectLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the collect location."
+        name:
+          type: string
+          description: "The name of the collect location."
+        isFulfillmentCenter:
+          type: boolean
+          description: "Indicates if the location is a fulfillment center."
+        country:
+          type: object
+          description: "The country of the collect location."
+          properties:
+            id:
+              type: integer
+              description: "The country identifier."
+        state:
+          type: object
+          description: "The state of the collect location. Defaults to 0 except when country is United States."
+          properties:
+            id:
+              type: integer
+              description: "The state identifier."
+        city:
+          type: string
+          description: "The city of the collect location."
+        postcode:
+          type: string
+          description: "The postal code of the collect location."
+        addressLine1:
+          type: string
+          description: "First line of the address."
+        addressLine2:
+          type: string
+          description: "Second line of the address."
+        addressLine3:
+          type: string
+          description: "Third line of the address."

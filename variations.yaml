@@ -1,0 +1,321 @@
+openapi: 3.1.0
+info:
+  title: Product Variations
+  description: API endpoints for managing product variations in ShopWired.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /products/{product_id}/variations:
+    get:
+      summary: List product variations
+      description: "Retrieves a list of product variations for a specified product."
+      operationId: listProductVariations
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "The unique identifier of the product."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of product variations."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductVariation"
+
+    post:
+      summary: Create a new product variation
+      description: "Creates a new product variation for a specified product."
+      operationId: createProductVariation
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "The unique identifier of the product."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductVariationCreate"
+      responses:
+        "201":
+          description: "Product variation created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductVariation"
+
+  /products/{product_id}/variations/{id}:
+    get:
+      summary: Get a specific product variation
+      description: "Retrieves a specific product variation by ID."
+      operationId: getProductVariationById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "The unique identifier of the product."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "The unique identifier of the product variation."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The product variation details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductVariation"
+
+    put:
+      summary: Update a product variation
+      description: "Updates an existing product variation."
+      operationId: updateProductVariation
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "The unique identifier of the product."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "The unique identifier of the product variation."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductVariationUpdate"
+      responses:
+        "200":
+          description: "Product variation updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductVariation"
+
+    delete:
+      summary: Delete a product variation
+      description: "Deletes an existing product variation."
+      operationId: deleteProductVariation
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "The unique identifier of the product."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "The unique identifier of the product variation."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Product variation deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ProductVariation:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the product variation."
+        price:
+          type: number
+          format: float
+          description: "The individual price for the product variation."
+        costPrice:
+          type: number
+          format: float
+          description: "The cost price for the product variation."
+        salePrice:
+          type: number
+          format: float
+          description: "The sale price for the product variation."
+        rewardPoints:
+          type: number
+          format: float
+          description: "The reward points earned from purchasing the variation."
+        sku:
+          type: string
+          description: "The SKU code for the product variation."
+        gtin:
+          type: string
+          description: "The global trade item number for the product variation."
+        mpn:
+          type: string
+          description: "The manufacturer's part number for the product variation."
+        weight:
+          type: number
+          format: float
+          description: "The weight of the product variation."
+        stock:
+          type: integer
+          description: "The stock quantity for the product variation."
+        image:
+          type: integer
+          description: "The image index for the product variation."
+        url:
+          type: string
+          description: "The URL for the product variation."
+        values:
+          type: array
+          description: "List of option values assigned to the variation."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "The unique identifier for the option value."
+              name:
+                type: string
+                description: "The name of the option value."
+              option:
+                type: object
+                description: "The option associated with the value."
+                properties:
+                  id:
+                    type: integer
+                    description: "The unique identifier for the option."
+                  name:
+                    type: string
+                    description: "The name of the option."
+
+    ProductVariationCreate:
+      type: object
+      required:
+        - values
+      properties:
+        price:
+          type: number
+          format: float
+          description: "The individual price for the product variation."
+        costPrice:
+          type: number
+          format: float
+          description: "The cost price for the product variation. A value of -1 indicates it is not set."
+        salePrice:
+          type: number
+          format: float
+          description: "The sale price for the product variation."
+        rewardPoints:
+          type: number
+          format: float
+          description: "The reward points earned from purchasing the variation."
+        sku:
+          type: string
+          description: "The SKU code for the product variation."
+        gtin:
+          type: string
+          description: "The global trade item number for the product variation."
+        mpn:
+          type: string
+          description: "The manufacturer's part number for the product variation."
+        weight:
+          type: number
+          format: float
+          description: "The weight of the product variation."
+        stock:
+          type: integer
+          description: "The stock quantity for the product variation."
+        image:
+          type: integer
+          description: "The image index for the product variation."
+        values:
+          type: array
+          description: "List of option value IDs assigned to the variation."
+          items:
+            type: integer
+
+    ProductVariationUpdate:
+      type: object
+      properties:
+        price:
+          type: number
+          format: float
+          description: "The individual price for the product variation."
+        costPrice:
+          type: number
+          format: float
+          description: "The cost price for the product variation. A value of -1 indicates it is not set."
+        salePrice:
+          type: number
+          format: float
+          description: "The sale price for the product variation."
+        rewardPoints:
+          type: number
+          format: float
+          description: "The reward points earned from purchasing the variation."
+        sku:
+          type: string
+          description: "The SKU code for the product variation."
+        gtin:
+          type: string
+          description: "The global trade item number for the product variation."
+        mpn:
+          type: string
+          description: "The manufacturer's part number for the product variation."
+        weight:
+          type: number
+          format: float
+          description: "The weight of the product variation."
+        stock:
+          type: integer
+          description: "The stock quantity for the product variation."
+        image:
+          type: integer
+          description: "The image index for the product variation."
+        values:
+          type: array
+          description: "List of option value IDs assigned to the variation."
+          items:
+            type: integer

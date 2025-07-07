@@ -1,0 +1,138 @@
+openapi: 3.1.0
+info:
+  title: Choice Set Values
+  description: API endpoints for managing choice set values.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /choice-set-values:
+    post:
+      summary: Create a choice set value
+      description: "Creates a new choice set value."
+      operationId: createChoiceSetValue
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChoiceSetValueCreate"
+      responses:
+        "201":
+          description: "Choice set value created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChoiceSetValue"
+
+  /choice-set-values/{id}:
+    put:
+      summary: Update a choice set value
+      description: "Updates an existing choice set value."
+      operationId: updateChoiceSetValue
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the choice set value to update."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChoiceSetValueUpdate"
+      responses:
+        "200":
+          description: "Choice set value updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChoiceSetValue"
+
+    delete:
+      summary: Delete a choice set value
+      description: "Deletes an existing choice set value."
+      operationId: deleteChoiceSetValue
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the choice set value to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Choice set value deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ChoiceSetValue:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Choice set value ID."
+        name:
+          type: string
+          description: "Choice set value name."
+        price:
+          type: number
+          format: float
+          description: "The price the customer will pay for selecting the choice set value."
+        costPrice:
+          type: number
+          format: float
+          description: "The cost price for the choice set value. A value of -1 indicates it is not set."
+        sortOrder:
+          type: integer
+          description: "The sort order for the choice set value."
+
+    ChoiceSetValueCreate:
+      type: object
+      required:
+        - set
+        - name
+      properties:
+        set:
+          type: integer
+          description: "The choice set ID that the value is for."
+        name:
+          type: string
+          description: "The name for the choice set value."
+        price:
+          type: number
+          format: float
+          description: "The price the customer will pay for selecting the choice set value."
+        sortOrder:
+          type: integer
+          description: "The sort order for the choice set value."
+
+    ChoiceSetValueUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The updated name for the choice set value."
+        price:
+          type: number
+          format: float
+          description: "The updated price for the choice set value."
+        sortOrder:
+          type: integer
+          description: "The updated sort order for the choice set value."

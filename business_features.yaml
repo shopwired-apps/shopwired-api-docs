@@ -1,0 +1,106 @@
+openapi: 3.1.0
+info:
+  title: Business Features
+  description: API endpoints for managing business features.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /business/features:
+    get:
+      summary: List business features
+      description: "Retrieves a list of business features, each with its name and enabled status."
+      operationId: listBusinessFeatures
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: name
+          in: query
+          description: "Filter by feature name. Options: 'google_product_fields' or 'custom_basket_prices'."
+          required: false
+          schema:
+            type: string
+            enum: [google_product_fields, custom_basket_prices]
+      responses:
+        "200":
+          description: "A list of business features."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BusinessFeature"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /business/features/change-status:
+    post:
+      summary: Change business feature status
+      description: "Enables or disables a specified business feature."
+      operationId: changeBusinessFeatureStatus
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BusinessFeatureStatusUpdate"
+      responses:
+        "200":
+          description: "Feature status updated successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: "Indicates if the operation was successful."
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "422":
+          description: "Unprocessable entity. Missing or incorrect parameters."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    BusinessFeature:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The name of the business feature."
+          enum: [google_product_fields, custom_basket_prices]
+        enabled:
+          type: boolean
+          description: "Indicates whether the feature is enabled."
+
+    BusinessFeatureStatusUpdate:
+      type: object
+      required:
+        - name
+        - status
+      properties:
+        name:
+          type: string
+          description: "The name of the feature to update. Options: 'google_product_fields' or 'custom_basket_prices'."
+          enum: [google_product_fields, custom_basket_prices]
+        status:
+          type: boolean
+          description: "The new status of the feature (true for enabled, false for disabled)."

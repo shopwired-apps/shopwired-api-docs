@@ -1,0 +1,160 @@
+openapi: 3.1.0
+info:
+  title: ShopWired Payments Disputes
+  description: API endpoints for managing disputes through ShopWired Payments.
+  version: "1.1.0"
+  
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /shopwired-payments/disputes:
+    get:
+      summary: List disputes
+      description: "Retrieves a list of disputes with pagination."
+      operationId: listDisputes
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to no sorting."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+            example: "created_desc"
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of disputes."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Dispute"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /shopwired-payments/disputes/{dispute_id}:
+    get:
+      summary: Get a specific dispute
+      description: "Retrieves a single dispute by ID."
+      operationId: getDisputeById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: dispute_id
+          in: path
+          description: "The unique identifier of the dispute."
+          required: true
+          schema:
+            type: string
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The dispute details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dispute"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Dispute not found."
+        "500":
+          description: "Server error."
+
+  /shopwired-payments/disputes/count:
+    get:
+      summary: Get total dispute count
+      description: "Retrieves the total number of disputes."
+      operationId: getDisputeCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of disputes."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of disputes."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Dispute:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Unique identifier for the dispute."
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp when the dispute was created."
+        currency:
+          type: string
+          description: "Currency of the disputed transaction."
+        amount:
+          type: number
+          format: float
+          description: "Total disputed amount."
+        feeAmount:
+          type: number
+          format: float
+          description: "Fee amount charged for the dispute."
+        orderId:
+          type: integer
+          description: "The associated order ID."

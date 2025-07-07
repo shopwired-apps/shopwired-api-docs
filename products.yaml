@@ -1,0 +1,1040 @@
+openapi: 3.1.0
+info:
+  title: Products
+  description: API endpoints for managing products through ShopWired.
+  version: "1.0.2"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /products:
+    get:
+      summary: List products
+      description: "Retrieves a list of products with pagination, optionally filtering by active/inactive status, and sorted by creation date if no other sort parameter is provided. By default, the first 50 products (both active and inactive) are returned, sorted by creation date."
+      operationId: listProducts
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "The maximum number of results to be returned (default: 50)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          description: "The starting position for the returned values."
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: "Sorting order for the results. If not included, results are sorted by creation date."
+          required: false
+          schema:
+            type: string
+            enum:
+              - title
+              - title_desc
+        - name: active
+          in: query
+          description: "Indicates whether to return active or inactive products (1 or 0, respectively). If not included, active and inactive products are returned."
+          required: false
+          schema:
+            type: integer
+            enum:
+              - 0
+              - 1
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Possible values: 'images', 'brand', 'categories', 'related', 'extras', 'customization_fields', 'ebay_shipping_rates', 'options', 'vat_relief', 'digital_files', 'variations', 'choices', 'custom_fields'."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of products."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+    post:
+      summary: Create a new product
+      description: "Creates a new product."
+      operationId: createProduct
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductCreate"
+      responses:
+        "201":
+          description: "Product created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /products/search:
+    get:
+      summary: Search products
+      description: "Returns products based on a keyword search, with pagination and sorting options."
+      operationId: searchProducts
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: keywords
+          in: query
+          description: "Keyword to search for."
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: "Sorting order for the results."
+          required: false
+          schema:
+            type: string
+            enum:
+              - score
+              - title_asc
+              - title_desc
+        - name: offset
+          in: query
+          description: "The starting position for the returned values."
+          required: false
+          schema:
+            type: integer
+        - name: count
+          in: query
+          description: "The maximum number of results to be returned."
+          required: false
+          schema:
+            type: integer
+        - name: session_id
+          in: query
+          description: "Used to make sure the search engine returns the same results in subsequent calls."
+          required: false
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of resources to embed (e.g. 'images', 'brand', etc.)."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of products matching the search criteria."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /products/count:
+    get:
+      summary: Get product count
+      description: "Returns a count of the products, optionally filtered by active/inactive status."
+      operationId: getProductsCount
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: active
+          in: query
+          description: "Should get count of active or inactive products (1, 0 respectively)."
+          required: false
+          schema:
+            type: integer
+            enum:
+              - 0
+              - 1
+      responses:
+        "200":
+          description: "Total count of products."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of products."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /products/{id}:
+    get:
+      summary: Get a single product
+      description: "Returns a single product by its unique ID."
+      operationId: getProductById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the product to return."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of resources to embed (e.g. 'images', 'brand', etc.)."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The product details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Product not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a product
+      description: "Updates an existing product by ID."
+      operationId: updateProduct
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the product to update."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: "Product updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Product not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a product
+      description: "Deletes an existing product by ID."
+      operationId: deleteProduct
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the product to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Product deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Product not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the product."
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp when the product was created."
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Timestamp when the product was last updated."
+        title:
+          type: string
+          description: "The title/name of the product."
+        description:
+          type: string
+          description: "The main description for the product (HTML supported)."
+        description2:
+          type: string
+          description: "The 2nd description for the product."
+        description3:
+          type: string
+          description: "The 3rd description for the product."
+        description4:
+          type: string
+          description: "The 4th description for the product."
+        description5:
+          type: string
+          description: "The 5th description for the product."
+        active:
+          type: boolean
+          description: "Whether the product is active and visible on the store."
+        bundle:
+          type: boolean
+          description: "Indicates if the product is sold as a bundle."
+        sortOrder:
+          type: integer
+          description: "Order in which the product is displayed."
+        deliveryPrice:
+          type: number
+          format: float
+          description: "A specific delivery price for the product (0 for free, -1 to reset to NULL)."
+        freeDelivery:
+          type: boolean
+          description: "Whether the product has free delivery."
+        singleDeliveryPrice:
+          type: boolean
+          description: "Whether the delivery price should only be charged once for multiple orders of the same product."
+        deliveryPrices:
+          type: array
+          description: "An array of additional delivery price objects (if any)."
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+                description: "A description of this delivery price variant."
+              price:
+                type: number
+                format: float
+                description: "The amount for this delivery price variant."  
+        weight:
+          type: number
+          format: float
+          description: "The weight of the product."
+        metaTitle:
+          type: string
+          description: "The meta title for the product page (for SEO)."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the product page (for SEO)."
+        metaDescription:
+          type: string
+          description: "The meta description for the product page (for SEO)."
+        slug:
+          type: string
+          description: "The slug for the product (without domain)."
+        url:
+          type: string
+          description: "The full URL for the product."
+        videoCode:
+          type: string
+          description: "Embedding code or URL for a product video."
+        sku:
+          type: string
+          description: "The SKU code for the product."
+        stock:
+          type: integer
+          description: "The stock quantity of the product."
+        comparePrice:
+          type: number
+          format: float
+          description: "The compare price (RRP) for the product."
+        gtin:
+          type: string
+          description: "The GTIN/UPC/EAN for the product."
+        mpn:
+          type: string
+          description: "The MPN (Manufacturer Part Number) for the product."
+        new:
+          type: boolean
+          description: "Whether the product should display the new indicator."
+        twoForOne:
+          type: boolean
+          description: "Whether the product is part of a two for one offer."
+        threeForTwo:
+          type: boolean
+          description: "Whether the product is part of a three for two offer."
+        vatExclusive:
+          type: boolean
+          description: "Set to false if VAT is charged on the product."
+        vatRelief:
+          type: boolean
+          description: "Set to true if VAT relief is enabled on the product."
+        warehouseNotes:
+          type: string
+          description: "Warehouse notes for internal reference."
+        price:
+          type: number
+          format: float
+          description: "The normal selling price for the product."
+        costPrice:
+          type: number
+          format: float
+          description: "The cost price of the product."
+        salePrice:
+          type: number
+          format: float
+          description: "The sale price, which will override the normal price if set."
+        excludedFromTradeDiscounts:
+          type: boolean
+          description: "Set to true if the product is excluded from trade discounts."
+        searchKeywords:
+          type: string
+          description: "Custom search keywords for the product."
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "Image identifier."
+              url:
+                type: string
+                description: "URL of the product image."
+              description:
+                type: string
+                description: "Description of the image."
+              sortOrder:
+                type: integer
+                description: "Sort order of the image."
+          description: "An array of images associated with this product."
+        hasRandomRelatedProducts:
+          type: boolean
+          description: "If true, related products are randomly selected."
+        shippingAddressNotRequired:
+          type: boolean
+          description: "Indicates if a shipping address is not required for this product."
+        googleIsBundle:
+          type: boolean
+          description: "Mark as true if the product is a bundle in Google feed."
+        googleNoIdentifierExists:
+          type: boolean
+          description: "Mark as true to set identifier_exists false in Google feed."
+        eBayBestOffer:
+          type: boolean
+          description: "Whether best offer is enabled for eBay."
+        eBayCondition:
+          type: integer
+          description: "The eBay condition ID."
+        eBayShippingRates:
+          type: array
+          items:
+            type: integer
+          description: "An array of eBay shipping rate IDs."
+        categories:
+          type: array
+          description: "The category IDs the product belongs to."
+          items:
+            type: integer
+        variations:
+          type: array
+          description: "An array of product variations."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "Identifier of the variation."
+              price:
+                type: number
+                format: float
+                description: "Price of this variation."
+              costPrice:
+                type: number
+                format: float
+                description: "Cost price of this variation."
+              salePrice:
+                type: number
+                format: float
+                description: "Sale price for this variation."
+              rewardPoints:
+                type: number
+                format: float
+                description: "Reward points for purchasing this variation."
+              sku:
+                type: string
+                description: "SKU for the variation."
+              gtin:
+                type: string
+                description: "GTIN for the variation."
+              mpn:
+                type: string
+                description: "MPN for the variation."
+              weight:
+                type: number
+                format: float
+                description: "Weight of the variation."
+              stock:
+                type: integer
+                description: "Stock quantity for the variation."
+              image:
+                type: integer
+                description: "Image index or ID for the variation."
+              values:
+                type: array
+                description: "Variation options/values array."
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: "ID of the option value."
+                    name:
+                      type: string
+                      description: "Name of the option value."
+                    option:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: "ID of the option group."
+                        name:
+                          type: string
+                          description: "Name of the option group."
+              url:
+                type: string
+                description: "URL for this variation."
+        related:
+          type: array
+          description: "The IDs of products related to this product."
+          items:
+            type: integer
+        extras:
+          type: array
+          description: "Array of extra product add-ons."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "The ID of the product extra."
+              name:
+                type: string
+                description: "The name of the product extra."
+              price:
+                type: number
+                format: float
+                description: "The price for this product extra."
+              costPrice:
+                type: number
+                format: float
+                description: "The cost price for this product extra."
+              sku:
+                type: string
+                description: "The SKU code for this product extra."
+        choices:
+          type: array
+          description: "Array of choice options assigned to the product."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "Unique ID of the choice."
+              customPrice:
+                type: number
+                format: float
+                description: "Custom price applied to this choice."
+              costPrice:
+                type: number
+                format: float
+                description: "Cost price for this choice."
+              set:
+                type: object
+                description: "Specifies the choice set."
+                properties:
+                  id:
+                    type: integer
+                    description: "The ID of the choice set."
+              value:
+                type: object
+                description: "Value details for this choice."
+                properties:
+                  id:
+                    type: integer
+                    description: "The ID of the choice value."
+        customizationFields:
+          type: array
+          description: "Array of customization fields for the product."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "The customization field ID."
+              label:
+                type: string
+                description: "The label for this custom field."
+              type:
+                type: integer
+                description: "Indicates the type of field (e.g., 1 for text, 2 for textarea)."
+              max_length:
+                type: integer
+                description: "Maximum length allowed for this custom field."
+        fileUploadsAllowed:
+          type: integer
+          description: "Number of file uploads allowed."
+        options:
+          type: array
+          description: "Array of product option objects (for variations)."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "The ID of the product option."
+              name:
+                type: string
+                description: "The name of the product option."
+        digitalFiles:
+          type: array
+          description: "An array of digital file objects attached to the product."
+          items:
+            type: object
+            description: "Information about a digital file, such as file ID or URL."
+        rewardPoints:
+          type: number
+          format: float
+          description: "Number of reward points earned when the product is purchased."
+        preOrder:
+          type: boolean
+          description: "Whether the product is available for pre-order."
+        subscription:
+          type: boolean
+          description: "Whether the product is part of a subscription."
+
+    ProductCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: "The title/name of the product."
+        description:
+          type: string
+          description: "The main description for the product."
+        description2:
+          type: string
+          description: "The 2nd description for the product."
+        description3:
+          type: string
+          description: "The 3rd description for the product."
+        description4:
+          type: string
+          description: "The 4th description for the product."
+        description5:
+          type: string
+          description: "The 5th description for the product."
+        active:
+          type: boolean
+          description: "Whether the product is active."
+        deliveryPrice:
+          type: number
+          format: float
+          description: "Delivery price for the product."
+        singleDeliveryPrice:
+          type: boolean
+          description: "Charge the delivery price only once if multiple units are ordered."
+        weight:
+          type: number
+          format: float
+          description: "Weight of the product."
+        metaTitle:
+          type: string
+          description: "Meta title for the product page."
+        metaDescription:
+          type: string
+          description: "Meta description for the product page."
+        metaKeywords:
+          type: string
+          description: "Meta keywords for the product page."
+        videoCode:
+          type: string
+          description: "Video embed code for the product."
+        sku:
+          type: string
+          description: "SKU code for the product."
+        stock:
+          type: integer
+          description: "Stock quantity (used if SKU is provided)."
+        comparePrice:
+          type: number
+          format: float
+          description: "Compare price (RRP) for the product."
+        gtin:
+          type: string
+          description: "GTIN/UPC/EAN for the product."
+        mpn:
+          type: string
+          description: "MPN (Manufacturer Part Number) for the product."
+        new:
+          type: boolean
+          description: "Displays 'new' indicator on the product if true."
+        twoForOne:
+          type: boolean
+          description: "Indicates if product has a two-for-one offer."
+        threeForTwo:
+          type: boolean
+          description: "Indicates if product has a three-for-two offer."
+        vatExclusive:
+          type: boolean
+          description: "Set to false if VAT is charged on the product."
+        vatRelief:
+          type: boolean
+          description: "Enable VAT relief if set to true."
+        warehouseNotes:
+          type: string
+          description: "Internal warehouse notes for the product."
+        price:
+          type: number
+          format: float
+          description: "Regular selling price for the product."
+        salePrice:
+          type: number
+          format: float
+          description: "Sale price overriding the regular price if set."
+        excludedFromTradeDiscounts:
+          type: boolean
+          description: "If true, the product is excluded from trade discounts."
+        searchKeywords:
+          type: string
+          description: "Custom search keywords for the product."
+        brand:
+          type: integer
+          description: "ID of the brand for the product."
+        googleCategory:
+          type: integer
+          description: "Google category ID (leaf) for the product."
+        googleCondition:
+          type: string
+          enum: ["new", "used", "refurbished"]
+          description: "Condition of the item for Google feed."
+        googleIsBundle:
+          type: boolean
+          description: "Mark as true if the product is a bundle for Google feed."
+        googleNoIdentifierExists:
+          type: boolean
+          description: "Set identifier_exists=false if true."
+        eBayCategory:
+          type: integer
+          description: "eBay category ID (leaf) for the product."
+        eBayBestOffer:
+          type: boolean
+          description: "False if not eligible for best offer on eBay."
+        eBayShippingRates:
+          type: array
+          items:
+            type: integer
+          description: "IDs of eBay shipping rates."
+        categories:
+          type: array
+          description: "Category IDs the product belongs to."
+          items:
+            type: integer
+        related:
+          type: array
+          description: "IDs of related products."
+          items:
+            type: integer
+        extras:
+          type: array
+          description: "Product extras."
+          items:
+            type: integer
+        choices:
+          type: array
+          description: "Choices assigned to the product."
+          items:
+            type: integer
+        customizationFields:
+          type: array
+          description: "Customisation fields for the product."
+          items:
+            type: integer
+        filters:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: "Filters assigned to the product, keyed by filter group option."
+        fileUploadsAllowed:
+          type: integer
+          description: "Number of file uploads allowed."
+        rewardPoints:
+          type: number
+          format: float
+          description: "Points earned when the product is purchased."
+        customFields:
+          type: object
+          additionalProperties: true
+          description: "Custom fields assigned to the product (string, integer, or array)."
+        hsCode:
+          type: string
+          description: "HS code for the product."
+        options:
+          type: array
+          description: "Product options."
+          items:
+            type: integer
+        digitalFiles:
+          type: array
+          description: "IDs of digital files attached to the product."
+          items:
+            type: object
+            description: "Represents a digital file attached to the product."
+        slug:
+          type: string
+          description: "Slug for the product."
+
+    ProductUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: "Updated title/name of the product."
+        description:
+          type: string
+          description: "Updated main description for the product."
+        description2:
+          type: string
+          description: "Updated 2nd description for the product."
+        description3:
+          type: string
+          description: "Updated 3rd description for the product."
+        description4:
+          type: string
+          description: "Updated 4th description for the product."
+        description5:
+          type: string
+          description: "Updated 5th description for the product."
+        active:
+          type: boolean
+          description: "Whether the product is active."
+        deliveryPrice:
+          type: number
+          format: float
+          description: "Updated specific delivery price."
+        singleDeliveryPrice:
+          type: boolean
+          description: "Charge the delivery price only once for multiple orders."
+        weight:
+          type: number
+          format: float
+          description: "Updated weight of the product."
+        metaTitle:
+          type: string
+          description: "The updated meta title for the product page."
+        metaDescription:
+          type: string
+          description: "The updated meta description for the product page."
+        metaKeywords:
+          type: string
+          description: "The updated meta keywords for the product page."
+        videoCode:
+          type: string
+          description: "Updated video embed code."
+        sku:
+          type: string
+          description: "Updated SKU code."
+        stock:
+          type: integer
+          description: "Updated stock quantity."
+        comparePrice:
+          type: number
+          format: float
+          description: "Updated compare price (RRP)."
+        gtin:
+          type: string
+          description: "Updated GTIN/UPC/EAN."
+        mpn:
+          type: string
+          description: "Updated Manufacturer Part Number."
+        new:
+          type: boolean
+          description: "Whether the product is now marked as new."
+        twoForOne:
+          type: boolean
+          description: "Whether the product is part of a two for one offer."
+        threeForTwo:
+          type: boolean
+          description: "Whether the product is part of a three for two offer."
+        vatExclusive:
+          type: boolean
+          description: "Set to false if VAT is charged on the product."
+        vatRelief:
+          type: boolean
+          description: "Set to true if VAT relief is enabled on the product."
+        warehouseNotes:
+          type: string
+          description: "Internal warehouse notes for this product."
+        price:
+          type: number
+          format: float
+          description: "Updated regular selling price of the product."
+        salePrice:
+          type: number
+          format: float
+          description: "Updated sale price of the product."
+        excludedFromTradeDiscounts:
+          type: boolean
+          description: "Whether the product is excluded from trade discounts."
+        searchKeywords:
+          type: string
+          description: "Updated custom search keywords."
+        brand:
+          type: integer
+          description: "Updated brand ID for the product."
+        googleCategory:
+          type: integer
+          description: "Updated Google category ID (leaf)."
+        googleCondition:
+          type: string
+          enum: ["new", "used", "refurbished"]
+          description: "Updated condition of the product for Google feed."
+        googleIsBundle:
+          type: boolean
+          description: "Mark as true if the product is a bundle in Google feed."
+        googleNoIdentifierExists:
+          type: boolean
+          description: "Set identifier_exists=false if true."
+        eBayCategory:
+          type: integer
+          description: "Updated eBay category ID (leaf)."
+        eBayBestOffer:
+          type: boolean
+          description: "False if not eligible for best offer on eBay."
+        eBayShippingRates:
+          type: array
+          items:
+            type: integer
+          description: "Updated list of eBay shipping rate IDs."
+        categories:
+          type: array
+          items:
+            type: integer
+          description: "Updated category IDs for the product."
+        related:
+          type: array
+          items:
+            type: integer
+          description: "Updated IDs of related products."
+        extras:
+          type: array
+          items:
+            type: integer
+          description: "Updated product extras."
+        choices:
+          type: array
+          items:
+            type: integer
+          description: "Updated choices assigned to the product."
+        customizationFields:
+          type: array
+          items:
+            type: integer
+          description: "Updated customisation fields for the product."
+        filters:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: "Updated filters assigned to the product, keyed by filter group option."
+        fileUploadsAllowed:
+          type: integer
+          description: "Updated number of file uploads allowed."
+        rewardPoints:
+          type: number
+          format: float
+          description: "Updated number of reward points for purchasing this product."
+        customFields:
+          type: object
+          additionalProperties: true
+          description: "Updated custom fields for the product (string, integer, or array)."
+        hsCode:
+          type: string
+          description: "Updated HS code for the product."
+        options:
+          type: array
+          items:
+            type: integer
+          description: "Updated product options list."
+        digitalFiles:
+          type: array
+          items:
+            type: object
+            description: "Represents an updated digital file attached to the product."
+          description: "Updated array of digital files."
+        slug:
+          type: string
+          description: "Updated slug for the product."

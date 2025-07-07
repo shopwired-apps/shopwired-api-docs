@@ -1,0 +1,192 @@
+openapi: 3.1.0
+info:
+  title: Product Extras
+  description: API endpoints for managing product extras.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /products/{product_id}/extras:
+    get:
+      summary: List product extras
+      description: "Retrieves a list of product extras assigned to a product."
+      operationId: listProductExtras
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the extras are assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of product extras."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductExtra"
+
+    post:
+      summary: Create a product extra
+      description: "Creates a new product extra."
+      operationId: createProductExtra
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the extra will be assigned to."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductExtraCreate"
+      responses:
+        "201":
+          description: "Product extra created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductExtra"
+
+  /products/{product_id}/extras/{id}:
+    put:
+      summary: Update a product extra
+      description: "Updates an existing product extra."
+      operationId: updateProductExtra
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the extra is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product extra to update."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductExtraUpdate"
+      responses:
+        "200":
+          description: "Product extra updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductExtra"
+
+    delete:
+      summary: Delete a product extra
+      description: "Deletes an existing product extra."
+      operationId: deleteProductExtra
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the extra is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product extra to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Product extra deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ProductExtra:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Product extra ID."
+        name:
+          type: string
+          description: "Product extra name."
+        price:
+          type: number
+          format: float
+          description: "Product extra price."
+        costPrice:
+          type: number
+          format: float
+          description: "Product extra cost price. A value of -1 indicates it is not set."
+        sku:
+          type: string
+          description: "Product extra SKU. Used to link to another product."
+
+    ProductExtraCreate:
+      type: object
+      required:
+        - name
+        - price
+        - sku
+      properties:
+        name:
+          type: string
+          description: "The name of the product extra."
+        price:
+          type: number
+          format: float
+          description: "The price for the product extra."
+        costPrice:
+          type: number
+          format: float
+          description: "The cost price for the product extra. A value of -1 indicates it is not set."
+        sku:
+          type: string
+          description: "Used to link a product extra to another product."
+
+    ProductExtraUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The updated name of the product extra."
+        price:
+          type: number
+          format: float
+          description: "The updated price for the product extra."
+        costPrice:
+          type: number
+          format: float
+          description: "The updated cost price for the product extra. A value of -1 indicates it is not set."
+        sku:
+          type: string
+          description: "The updated SKU for the product extra."

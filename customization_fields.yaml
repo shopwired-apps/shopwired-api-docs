@@ -1,0 +1,181 @@
+openapi: 3.1.0
+info:
+  title: Product Customisation Fields
+  description: API endpoints for managing product customisation fields.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /products/{product_id}/customization-fields:
+    get:
+      summary: List product customisation fields
+      description: "Retrieves a list of product customisation fields assigned to a product."
+      operationId: listProductCustomizationFields
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the customisation fields are assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of product customisation fields."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductCustomizationField"
+
+    post:
+      summary: Create a product customisation field
+      description: "Creates a new product customisation field."
+      operationId: createProductCustomizationField
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the customisation field will be assigned to."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductCustomizationFieldCreate"
+      responses:
+        "201":
+          description: "Product customisation field created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductCustomizationField"
+
+  /products/{product_id}/customization-fields/{id}:
+    put:
+      summary: Update a product customisation field
+      description: "Updates an existing product customisation field."
+      operationId: updateProductCustomizationField
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the customisation field is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product customisation field to update."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductCustomizationFieldUpdate"
+      responses:
+        "200":
+          description: "Product customisation field updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductCustomizationField"
+
+    delete:
+      summary: Delete a product customisation field
+      description: "Deletes an existing product customisation field."
+      operationId: deleteProductCustomizationField
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the customisation field is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product customisation field to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Product customisation field deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ProductCustomizationField:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the customisation field."
+        label:
+          type: string
+          description: "The label of the customisation field."
+        type:
+          type: integer
+          enum: [1, 2]
+          description: "The type of the customisation field (1 for text input, 2 for text area)."
+        max_length:
+          type: integer
+          description: "The maximum allowed length for the customisation field. Defaults to 0 (no limit)."
+
+    ProductCustomizationFieldCreate:
+      type: object
+      required:
+        - label
+        - type
+      properties:
+        label:
+          type: string
+          maxLength: 30
+          description: "The field label."
+        type:
+          type: integer
+          enum: [1, 2]
+          description: "The type of customisation field (1 for text input, 2 for text area)."
+        max_length:
+          type: integer
+          description: "The maximum allowed length for the customisation field. Defaults to 0 (no limit)."
+
+    ProductCustomizationFieldUpdate:
+      type: object
+      properties:
+        label:
+          type: string
+          maxLength: 30
+          description: "The updated field label."
+        type:
+          type: integer
+          enum: [1, 2]
+          description: "The updated type of the customisation field."
+        max_length:
+          type: integer
+          description: "The updated maximum allowed length for the customisation field. Defaults to 0 (no limit)."

@@ -1,0 +1,132 @@
+openapi: 3.1.0
+info:
+  title: Product Option Values
+  description: API endpoints for managing product option values.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /products/{product_id}/option-values:
+    post:
+      summary: Create a product option value
+      description: "Creates a new product option value for a specific product."
+      operationId: createProductOptionValue
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the option value will be assigned to."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductOptionValueCreate"
+      responses:
+        "201":
+          description: "Product option value created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductOptionValue"
+
+  /products/{product_id}/option-values/{id}:
+    put:
+      summary: Update a product option value
+      description: "Updates an existing product option value."
+      operationId: updateProductOptionValue
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the option value is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product option value to update."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductOptionValueUpdate"
+      responses:
+        "200":
+          description: "Product option value updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductOptionValue"
+
+    delete:
+      summary: Delete a product option value
+      description: "Deletes an existing product option value."
+      operationId: deleteProductOptionValue
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product which the option value is assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the product option value to delete."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Product option value deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    ProductOptionValue:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the product option value."
+        name:
+          type: string
+          description: "The name of the product option value."
+
+    ProductOptionValueCreate:
+      type: object
+      required:
+        - name
+        - option
+      properties:
+        name:
+          type: string
+          description: "The name of the product option value."
+        option:
+          type: integer
+          description: "The ID of the product option that the product option value is assigned to."
+
+    ProductOptionValueUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The updated name of the product option value."

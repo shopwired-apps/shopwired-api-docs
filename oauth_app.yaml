@@ -1,0 +1,90 @@
+openapi: 3.1.0
+info:
+  title: App Data Management
+  description: API endpoints for viewing, creating, and deleting app data.
+  version: "1.0.1"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /app:
+    get:
+      summary: Return an app ID
+      description: "Retrieves the unique ID of the app."
+      security:
+        - OAuth2: []
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: "The unique identifier of the app."
+
+  /app/data:
+    get:
+      summary: Get all app data
+      description: "Retrieves all app data. This endpoint allows OAuth-based apps to store up to 50 'data items' (like settings, customer data, and so on), each with a name and a value."
+      security:
+        - OAuth2: []
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                  description: "Key-value pairs of app data."
+
+    post:
+      summary: Create new app data
+      description: "Creates new app data with specified key-value pairs. Each app can store up to 50 data items. Names must be strings (max length 50), containing only letters, digits, underscores, or dashes, and must start with a letter. Values must be strings with a maximum length of 250."
+      security:
+        - OAuth2: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              maxProperties: 50
+              additionalProperties:
+                type: string
+                maxLength: 250
+                description: "Key and value can be any string. The name must be a string (max length 50) with letters, digits, underscores, or dashes, starting with a letter. The value must be a string (max length 250)."
+      responses:
+        "201":
+          description: "Created"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                  description: "Key-value pairs of created app data."
+
+    delete:
+      summary: Deletes all app data
+      description: "Deletes all app data."
+      security:
+        - OAuth2: []
+      responses:
+        "204":
+          description: "No Content"
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes: {}

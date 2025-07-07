@@ -1,0 +1,362 @@
+openapi: 3.1.0
+info:
+  title: Brands
+  description: API endpoints for managing brands in ShopWired.
+  version: "1.0.14"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /brands:
+    get:
+      summary: List active brands
+      description: "Retrieves a list of brands with optional sorting."
+      operationId: listBrands
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Maximum number of results to be returned (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Starting position for the returned values."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to creation date."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+              - title
+              - title_desc
+          example: "created_desc"
+        - name: fields
+          in: query
+          description: "Comma-separated list of properties to include in the response."
+          required: false
+          schema:
+            type: string
+          example: "id,title,slug,url"
+      responses:
+        "200":
+          description: "A list of brands."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Brand"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new brand
+      description: "Creates a new brand."
+      operationId: createBrand
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandCreate"
+      responses:
+        "201":
+          description: "Brand created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /brands/count:
+    get:
+      summary: Get total brand count
+      description: "Retrieves the total number of brands."
+      operationId: getBrandCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of brands."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of brands."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /brands/{id}:
+    get:
+      summary: Get a specific brand
+      description: "Retrieves a single brand by ID."
+      operationId: getBrandById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the brand."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of properties to include in the response."
+          required: false
+          schema:
+            type: string
+          example: "id,title,slug,url"
+      responses:
+        "200":
+          description: "The brand details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Brand not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a brand
+      description: "Updates an existing brand by ID."
+      operationId: updateBrand
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the brand."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandUpdate"
+      responses:
+        "200":
+          description: "Brand updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Brand not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a brand
+      description: "Deletes an existing brand by ID."
+      operationId: deleteBrand
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the brand."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Brand deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Brand not found."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Brand:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the brand."
+        createdAt:
+          type: string
+          format: date-time
+          description: "The date and time when the brand was created."
+        title:
+          type: string
+          description: "The name of the brand."
+        description:
+          type: string
+          description: "A description of the brand."
+        slug:
+          type: string
+          description: "The URL slug for the brand."
+        url:
+          type: string
+          description: "The full URL of the brand."
+        active:
+          type: boolean
+          description: "Whether the brand is active."
+        featured:
+          type: boolean
+          description: "Whether the brand is featured."
+        sortOrder:
+          type: integer
+          description: "The position/order of the brand when displayed in lists."
+        metaTitle:
+          type: string
+          description: "The title tag for the brand page."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the brand page."
+        metaDescription:
+          type: string
+          description: "The meta description for the brand page."
+        image:
+          type: object
+          description: "The image object (present only when the brand has an image)."
+          properties:
+            url:
+              type: string
+              description: "The URL of the brand image."
+        contactInformation:
+          type: object
+          description: "Contact information for the brand."
+          properties:
+            legalName:
+              type: string
+              description: "Legal name of the brand."
+            contactName:
+              type: string
+              description: "Primary contact name."
+            address:
+              type: string
+              description: "Contact address."
+            countryId:
+              type: integer
+              description: "ID for the contact's country."
+            emailAddress:
+              type: string
+              description: "Contact email address."
+            phoneNumber:
+              type: string
+              description: "Contact phone number."
+            gpsrType:
+              type: string
+              description: "GPSR type for the brand."
+              enum:
+                - manufacturer
+                - importer
+                - authorised representative
+                - fulfilment service provider
+
+    BrandCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: "The title/name of the brand."
+        description:
+          type: string
+          description: "The description of the brand."
+        slug:
+          type: string
+          description: "The URL slug for the brand (without domain name)."
+        active:
+          type: boolean
+          description: "Whether the brand is active (default: true)."
+          default: true
+        metaTitle:
+          type: string
+          description: "The title tag for the brand page."
+        metaDescription:
+          type: string
+          description: "The meta description for the brand page."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the brand page."
+        image:
+          type: string
+          description: "URL or base64 encoded image for the brand."
+
+    BrandUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: "The title/name of the brand."
+        description:
+          type: string
+          description: "The description of the brand."
+        slug:
+          type: string
+          description: "The URL slug for the brand (without domain name)."
+        active:
+          type: boolean
+          description: "Whether the brand is active."
+        metaTitle:
+          type: string
+          description: "The title tag for the brand page."
+        metaDescription:
+          type: string
+          description: "The meta description for the brand page."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the brand page."
+        image:
+          type: string
+          description: "URL or base64 encoded image for the brand."

@@ -1,0 +1,384 @@
+openapi: 3.1.0
+info:
+  title: Categories
+  description: API endpoints for managing categories in ShopWired.
+  version: "1.0.9"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /categories:
+    get:
+      summary: List categories
+      description: "Retrieves a list of categories with optional sorting."
+      operationId: listCategories
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Maximum number of results to be returned (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Starting position for the returned values."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Sorting order for the results. Defaults to creation date."
+          required: false
+          schema:
+            type: string
+            enum:
+              - created
+              - created_asc
+              - created_desc
+              - title
+              - title_desc
+          example: "title_desc"
+        - name: fields
+          in: query
+          description: "Comma-separated list of properties to include in the response."
+          required: false
+          schema:
+            type: string
+          example: "id,title,slug,url"
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available value: `parents`."
+          required: false
+          schema:
+            type: string
+          example: "parents"
+      responses:
+        "200":
+          description: "A list of categories."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Create a new category
+      description: "Creates a new category."
+      operationId: createCategory
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryCreate"
+      responses:
+        "201":
+          description: "Category created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /categories/count:
+    get:
+      summary: Get total category count
+      description: "Retrieves the total number of categories."
+      operationId: getCategoryCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of categories."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of categories."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /categories/{id}:
+    get:
+      summary: Get a specific category
+      description: "Retrieves a specific category by ID."
+      operationId: getCategoryById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the category."
+          required: true
+          schema:
+            type: integer
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available value: `parents`."
+          required: false
+          schema:
+            type: string
+          example: "parents"
+      responses:
+        "200":
+          description: "The category details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Category not found."
+        "500":
+          description: "Server error."
+
+    put:
+      summary: Update a category
+      description: "Updates an existing category by ID."
+      operationId: updateCategoryById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the category."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryCreate"
+      responses:
+        "200":
+          description: "Category updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Category not found."
+        "500":
+          description: "Server error."
+
+    delete:
+      summary: Delete a category
+      description: "Deletes an existing category by ID."
+      operationId: deleteCategoryById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the category."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Category deleted successfully."
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Category not found."
+        "500":
+          description: "Server error."
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the category."
+        createdAt:
+          type: string
+          format: date-time
+          description: "The date and time when the category was created."
+        title:
+          type: string
+          description: "The title or name of the category."
+        description:
+          type: string
+          description: "The description for the category."
+        description2:
+          type: string
+          description: "An additional description for the category."
+        slug:
+          type: string
+          description: "The URL slug for the category (without the domain name)."
+        url:
+          type: string
+          description: "The full URL for the category."
+        active:
+          type: boolean
+          description: "Whether the category is active."
+        featured:
+          type: boolean
+          description: "Whether the category is featured."
+        tradeOnly:
+          type: boolean
+          description: "Whether the category is restricted to trade customers only."
+        sortOrder:
+          type: integer
+          description: "The display order for the category."
+        metaTitle:
+          type: string
+          description: "The meta title for the category page, used for SEO purposes."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the category page, used for SEO purposes."
+        metaDescription:
+          type: string
+          description: "The meta description for the category page, used for SEO purposes."
+        image:
+          type: object
+          description: "Image object for the category."
+          properties:
+            url:
+              type: string
+              description: "The URL of the category image."
+        parents:
+          type: array
+          description: "An array of parent categories related to this category."
+          items:
+            $ref: "#/components/schemas/ParentCategory"
+
+    ParentCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the parent category."
+        createdAt:
+          type: string
+          format: date-time
+          description: "The date and time when the parent category was created."
+        title:
+          type: string
+          description: "The title or name of the parent category."
+        description:
+          type: string
+          description: "The description for the parent category."
+        description2:
+          type: string
+          description: "An additional description for the parent category."
+        slug:
+          type: string
+          description: "The URL slug for the parent category (without the domain name)."
+        url:
+          type: string
+          description: "The full URL for the parent category."
+        active:
+          type: boolean
+          description: "Whether the parent category is active."
+        featured:
+          type: boolean
+          description: "Whether the parent category is featured."
+        tradeOnly:
+          type: boolean
+          description: "Whether the parent category is restricted to trade customers only."
+        sortOrder:
+          type: integer
+          description: "The display order for the parent category."
+        metaTitle:
+          type: string
+          description: "The meta title for the parent category page, used for SEO purposes."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the parent category page, used for SEO purposes."
+        metaDescription:
+          type: string
+          description: "The meta description for the parent category page, used for SEO purposes."
+        image:
+          type: object
+          description: "Image object for the parent category."
+          properties:
+            url:
+              type: string
+              description: "The URL of the parent category image."
+
+    CategoryCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: "The title of the category."
+        description:
+          type: string
+          description: "The description for the category."
+        description2:
+          type: string
+          description: "An additional description for the category."
+        slug:
+          type: string
+          description: "The URL slug for the category (without the domain name)."
+        active:
+          type: boolean
+          description: "Whether the category is active."
+          default: true
+        metaTitle:
+          type: string
+          description: "The meta title for the category page."
+        metaDescription:
+          type: string
+          description: "The meta description for the category page."
+        metaKeywords:
+          type: string
+          description: "The meta keywords for the category page."
+        image:
+          type: string
+          description: "The image for the category, provided as a URL or base64 encoded string."
+        parents:
+          type: array
+          description: "An array of parent category IDs related to this category."
+          items:
+            type: integer
+            description: "The unique identifier of the parent category."

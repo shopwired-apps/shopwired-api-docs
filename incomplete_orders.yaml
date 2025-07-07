@@ -1,0 +1,643 @@
+openapi: 3.1.0
+info:
+  title: Incomplete Orders
+  description: API endpoints for managing incomplete orders.
+  version: "1.0.10"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /incomplete-orders:
+    get:
+      summary: List incomplete orders
+      description: "Retrieves a list of incomplete orders with pagination."
+      operationId: listIncompleteOrders
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve."
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: "Return orders created after this UNIX timestamp."
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: "Sort order."
+          required: false
+          schema:
+            type: string
+            enum: ["date", "date_desc"]
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available values: `bundle_products`, `admin_comments`, `file_archives`, `custom_fields`, `custom_product_fields`, `sales_tax`, `sales_tax_info`, `sales_tax_breakdown`."
+          required: false
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: "A list of incomplete orders."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IncompleteOrder"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /incomplete-orders/{id}:
+    get:
+      summary: Get an incomplete order by ID
+      description: "Retrieves a single incomplete order by its ID."
+      operationId: getIncompleteOrder
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the incomplete order."
+          required: true
+          schema:
+            type: integer
+        - name: embed
+          in: query
+          description: "Comma-separated list of related resources to embed in the response. Available values: `bundle_products`, `admin_comments`, `file_archives`, `custom_fields`, `custom_product_fields`, `sales_tax_info`."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "The details of the incomplete order."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncompleteOrder"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "404":
+          description: "Incomplete order not found."
+        "500":
+          description: "Server error."
+
+  /incomplete-orders/count:
+    get:
+      summary: Get total incomplete order count
+      description: "Retrieves the total number of incomplete orders."
+      operationId: getIncompleteOrderCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of incomplete orders."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of incomplete orders."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    IncompleteOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Returns the ID of the incomplete order."
+        reference:
+          type: integer
+          description: "Returns the order reference number."
+        created:
+          type: string
+          description: "Returns the creation date of the incomplete order."
+        archived:
+          type: boolean
+          description: "Returns true if the incomplete order is archived."
+        billingAddress:
+          type: object
+          description: "Returns the billing address for the incomplete order."
+          properties:
+            name:
+              type: string
+              description: "Returns the billing name."
+            emailAddress:
+              type: string
+              description: "Returns the billing email address."
+            telephone:
+              type: string
+              description: "Returns the billing telephone number."
+            companyName:
+              type: string
+              description: "Returns the billing company name."
+            addressLine1:
+              type: string
+              description: "Returns the first line of the billing address."
+            addressLine2:
+              type: string
+              description: "Returns the second line of the billing address."
+            addressLine3:
+              type: string
+              description: "Returns the third line of the billing address."
+            city:
+              type: string
+              description: "Returns the billing city."
+            province:
+              type: string
+              description: "Returns the billing state/county (not available for US orders)."
+            state:
+              type: string
+              description: "Returns the billing state (only available for US orders)."
+            postcode:
+              type: string
+              description: "Returns the billing postcode."
+            country:
+              type: string
+              description: "Returns the billing country."
+            countryId:
+              type: integer
+              description: "Returns the country ID for the billing address."
+        shippingAddress:
+          type: object
+          description: "Returns the shipping address for the incomplete order."
+          properties:
+            name:
+              type: string
+              description: "Returns the shipping name."
+            emailAddress:
+              type: string
+              description: "Returns the shipping email address."
+            telephone:
+              type: string
+              description: "Returns the shipping telephone number."
+            companyName:
+              type: string
+              description: "Returns the shipping company name."
+            addressLine1:
+              type: string
+              description: "Returns the first line of the shipping address."
+            addressLine2:
+              type: string
+              description: "Returns the second line of the shipping address."
+            addressLine3:
+              type: string
+              description: "Returns the third line of the shipping address."
+            city:
+              type: string
+              description: "Returns the shipping city."
+            province:
+              type: string
+              description: "Returns the delivery state/county (not available for US orders)."
+            state:
+              type: string
+              description: "Returns the delivery state (only available for US orders)."
+            postcode:
+              type: string
+              description: "Returns the shipping postcode."
+            country:
+              type: string
+              description: "Returns the shipping country."
+            countryId:
+              type: integer
+              description: "Returns the country ID for the shipping address."
+        paymentMethod:
+          type: string
+          description: "Returns the payment method used for the order (if available)."
+        total:
+          type: number
+          description: "Returns the grand total value of the incomplete order."
+        subTotal:
+          type: number
+          description: "Returns the subtotal of the incomplete order."
+        shippingTotal:
+          type: number
+          description: "Returns the total shipping cost for the incomplete order."
+        originalShippingTotal:
+          type: number
+          description: "Returns the original shipping cost before discounts."
+        partialPaymentTotal:
+          type: number
+          description: "Returns the total of any partial payments applied."
+        tax:
+          type: object
+          description: "Returns the tax information for the incomplete order."
+          properties:
+            type:
+              type: string
+              description: "Returns the tax type."
+            value:
+              type: number
+              description: "Returns the tax value."
+        salesTaxes:
+          type: array
+          description: "Returns an array of sales tax details. Only present when sales_tax is embedded."
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: "The type of tax jurisdiction (e.g., state, city)."
+              jurisdiction:
+                type: string
+                description: "The name of the tax jurisdiction."
+              taxableAmount:
+                type: number
+                description: "The amount that is subject to tax."
+              rate:
+                type: number
+                description: "The tax rate applied."
+              amount:
+                type: number
+                description: "The calculated tax amount based on the taxable amount and rate."
+              originalAmount:
+                type: number
+                description: "The original tax amount before any manual edits."
+              edited:
+                type: boolean
+                description: "Indicates whether the tax amount has been manually edited."
+        discounts:
+          type: array
+          description: "Returns an array of discounts applied to the incomplete order."
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name of the discount."
+              value:
+                type: number
+                description: "The value of the discount applied."
+              type:
+                type: string
+                description: "The type of discount (e.g., 'voucher')."
+              code:
+                type: string
+                description: "The discount code used, if applicable."
+              voucherId:
+                type: integer
+                description: "The unique identifier for the voucher, if applicable."
+        fees:
+          type: array
+          description: "Returns an array of transaction fees applied to the incomplete order (not ShopWired Payments processing fees)."
+        shipping:
+          type: array
+          description: "Returns an array of shipping options for the incomplete order."
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "Returns the name of the shipping option."
+              value:
+                type: number
+                description: "Returns the value of the shipping option."
+              vatRate:
+                type: number
+                description: "Returns the VAT rate for the shipping option."
+        products:
+          type: array
+          description: "Returns an array of products included in the incomplete order."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "Returns the unique identifier of the product."
+              itemId:
+                type: integer
+                description: "Returns the item ID of the product."
+              title:
+                type: string
+                description: "Returns the title of the product."
+              sku:
+                type: string
+                description: "Returns the SKU code of the product."
+              gtin:
+                type: string
+                description: "Returns the GTIN (Global Trade Item Number) of the product."
+              mpn:
+                type: string
+                description: "Returns the MPN (Manufacturer Part Number) of the product."
+              price:
+                type: number
+                description: "Returns the price of the product excluding VAT."
+              priceVat:
+                type: number
+                description: "Returns the VAT amount applicable to the product price."
+              total:
+                type: number
+                description: "Returns the total price of the product excluding VAT."
+              totalVat:
+                type: number
+                description: "Returns the total VAT amount applicable to the product."
+              originalPrice:
+                type: number
+                description: "Returns the original price of the product before any discounts."
+              quantity:
+                type: integer
+                description: "Returns the quantity of the product ordered."
+              extras:
+                type: array
+                description: "Returns any extras added to the product."
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: "The name of the extra."
+                    value:
+                      type: number
+                      description: "The price of the extra, excluding VAT."
+              choices:
+                type: array
+                description: "Returns the choices selected for the product."
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: "The name of the choice."
+                    value:
+                      type: string
+                      description: "The value selected for the choice."
+              variation:
+                type: array
+                description: "Returns the variations applicable to the product."
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: "The name of the variation (e.g., 'Size')."
+                    value:
+                      type: string
+                      description: "The value selected for the variation (e.g., 'S')."
+              vatRate:
+                type: number
+                description: "Returns the VAT rate applied to the product."
+              weight:
+                type: number
+                description: "Returns the weight of the product."
+              rewardPointsEarned:
+                type: integer
+                description: "Returns the number of reward points earned for the product."
+              comments:
+                type: string
+                description: "Returns any comments associated with the product."
+              giftVoucher:
+                type: boolean
+                description: "Returns true if the product is a gift voucher."
+              warehouseNotes:
+                type: string
+                description: "Returns any notes related to the product from the warehouse."
+              bundleProducts:
+                type: array
+                description: "Returns the constituent products of a bundle product. Only present when bundle_products are embedded."
+                items:
+                  type: object
+                  properties:
+                    name: 
+                      type: string
+                      description: "The name of the constituent product."
+                    sku:
+                      type: string
+                      description: "The SKU code of the constituent product."
+              customFields:
+                type: array
+                description: "Returns custom fields associated with the product. Only present when custom_product_fields are embedded."
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: "The name of the custom field."
+                    value:
+                      type: string
+                      description: "The value associated with the custom field name."
+              preOrder:
+                type: boolean
+                description: "Returns true if the product is a pre-order."
+        comments:
+          type: string
+          description: "Returns any comments associated with the incomplete order."
+        totalWeight:
+          type: string
+          description: "Returns the total weight of items in the incomplete order."
+        weightUnit:
+          type: string
+          description: "Returns the unit of weight measurement."
+        marketing:
+          type: boolean
+          description: "Returns true if the customer accepted marketing."
+        adminComments:
+          type: array
+          description: "Returns comments added through the admin system. Only available when admin_comments are embedded."
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "Returns the ID of the admin comment."
+              created:
+                type: string
+                description: "Returns the creation date of the admin comment."
+              content:
+                type: string
+                description: "Returns the content of the admin comment."
+              status_id:
+                type: integer
+                description: "Always returns 0 for the admin comment."
+        customer:
+          type: object
+          description: "Returns information about the customer who created the incomplete order."
+          properties:
+            id:
+              type: integer
+              description: "Returns the ID of the customer."
+            type:
+              type: integer
+              description: "Returns the type of customer."
+        deliveryDate:
+          type: string
+          description: "Returns the delivery date of the incomplete order."
+        transactionId:
+          type: string
+          description: "Returns the transaction ID connected to the incomplete order (if available)."
+        earnedRewardPoints:
+          type: integer
+          description: "Returns the number of reward points earned for the incomplete order."
+        partialPayments:
+          type: array
+          description: "Returns an array of partial payments applied to the order, such as gift vouchers."
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: "The type of partial payment (e.g., 'gift_voucher')."
+              value:
+                type: number
+                description: "The value of the partial payment."
+              data:
+                type: string
+                description: "Additional data associated with the partial payment, such as the voucher code."
+        customFields:
+          type: array
+          description: "Returns custom fields associated with the incomplete order. The object consists of key-value pairs where the key is the custom field name and the value is the custom field value."
+          additionalProperties:
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name of the custom field."
+              value:
+                type: string
+                description: "The value associated with the custom field name."
+        preOrder:
+          type: boolean
+          description: "Returns true if the incomplete order is a pre-order."
+        fileArchives:
+          type: array
+          description: "Returns an array of file archives associated with the order. Only present when file_archives are embedded."
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+                description: "The title of the file archive."
+              url:
+                type: string
+                description: "The URL where the file archive can be accessed."
+        referrerId:
+          type: integer
+          description: "Returns the ID of the referrer, if applicable."
+        salesTaxInfo:
+          type: object
+          description: "Returns detailed sales tax information. Only present when sales_tax_info or sales_tax_breakdown are embedded."
+          properties:
+            breakdown:
+              type: object
+              description: "Provides a breakdown of sales tax by shipping and line items. Only present when sales_tax_breakdown is embedded."
+              properties:
+                shipping:
+                  type: array
+                  description: "An array of tax details related to shipping."
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: "The type of tax jurisdiction (e.g., country, state, city)."
+                      taxableAmount:
+                        type: number
+                        description: "The amount that is subject to tax for shipping."
+                      rate:
+                        type: number
+                        description: "The tax rate applied for the shipping jurisdiction."
+                      amount:
+                        type: number
+                        description: "The calculated tax amount for the shipping jurisdiction."
+                      jurisdiction:
+                        type: string
+                        description: "The name of the tax jurisdiction."
+
+                lineItems:
+                  type: array
+                  description: "An array of tax details for each line item."
+                  items:
+                    type: object
+                    properties:
+                      itemId:
+                        type: integer
+                        description: "The unique identifier for the line item."
+                      productId:
+                        type: integer
+                        description: "The unique identifier for the product."
+                      totalPriceExcludingTax:
+                        type: number
+                        description: "The total price for the item excluding tax."
+                      taxes:
+                        type: array
+                        description: "An array of tax details for the line item."
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              description: "The type of tax jurisdiction (e.g., country, state, city)."
+                            taxableAmount:
+                              type: number
+                              description: "The amount that is subject to tax for the line item."
+                            rate:
+                              type: number
+                              description: "The tax rate applied for the line item jurisdiction."
+                            amount:
+                              type: number
+                              description: "The calculated tax amount for the line item jurisdiction."
+                            jurisdiction:
+                              type: string
+                              description: "The name of the tax jurisdiction."
+            nexusAddress:
+              type: object
+              description: "The nexus address used for tax calculations."
+              properties:
+                country:
+                  type: string
+                  description: "The country of the nexus address."
+                state:
+                  type: string
+                  description: "The state of the nexus address."
+                zip:
+                  type: string
+                  description: "The ZIP code of the nexus address."
+                city:
+                  type: string
+                  description: "The city of the nexus address."
+                street:
+                  type: string
+                  description: "The street address of the nexus location."
+        lineItemVatCalculation:
+          type: boolean
+          description: "Returns true if VAT was calculated based on the total quantity of a line item."

@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: Stock
+  description: API endpoints for retrieving and updating stock quantities.
+  version: "1.1.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /stock:
+    get:
+      summary: Retrieve stock quantity
+      description: "Returns the stock quantity for a specified SKU code."
+      operationId: getStock
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: sku
+          in: query
+          description: "The SKU code for the product or product variation."
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Stock quantity retrieved successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stock"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+    post:
+      summary: Update stock quantity
+      description: "Updates the stock quantity for a specified SKU code."
+      operationId: updateStock
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockUpdate"
+      responses:
+        "200":
+          description: "Stock updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockUpdateResponse"
+        "400":
+          description: "Invalid request data."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Stock:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: "The SKU code for the product or product variation."
+        quantity:
+          type: integer
+          description: "The current stock quantity for the SKU code."
+
+    StockUpdate:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: "The SKU code for the product or product variation. Required when using 'quantity' alone. Should not be used with 'items'."
+        quantity:
+          type: integer
+          description: "The quantity of stock for the SKU code. Required when using 'sku' alone. Should not be used with 'items'."
+        items:
+          type: array
+          description: "Array of stock items to update. Should not be used with 'sku' or 'quantity'. Maximum of 15 items allowed."
+          maxItems: 15
+          items:
+            type: object
+            properties:
+              sku:
+                type: string
+                description: "The SKU code for the product or product variation."
+              quantity:
+                type: integer
+                description: "The quantity of stock for the SKU code."
+
+    StockUpdateResponse:
+      type: object
+      properties:
+        sku:
+          type: string
+          description: "The SKU code for the product or product variation. Only present when 'sku' and 'quantity' were used in the request."
+        quantity:
+          type: integer
+          description: "The updated stock quantity. Only present when 'sku' and 'quantity' were used in the request."
+        updated:
+          type: integer
+          description: "The count of items updated. Only present when 'items' were provided in the request."

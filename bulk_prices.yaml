@@ -1,0 +1,222 @@
+openapi: 3.1.0
+info:
+  title: Product Bulk Prices
+  description: API endpoints for managing product bulk prices.
+  version: "1.0.2"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /products/{id}/bulk-prices:
+    get:
+      summary: List bulk prices for a product
+      description: "Retrieves a list of bulk prices assigned to a specific product."
+      operationId: listBulkPrices
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the product which the bulk prices are assigned to."
+          required: true
+          schema:
+            type: integer
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: "A list of bulk prices."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BulkPrice"
+
+    post:
+      summary: Create a bulk price for a product
+      description: "Creates a new bulk price for a specific product. Triggers a product update event upon creation."
+      operationId: createBulkPrice
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "ID of the product which the bulk prices will be assigned to."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkPriceCreate"
+      responses:
+        "201":
+          description: "Bulk price created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkPrice"
+
+  /products/{product_id}/bulk-prices/{id}:
+    get:
+      summary: Get a specific bulk price for a product
+      description: "Retrieves a specific bulk price assigned to a product."
+      operationId: getBulkPriceById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the bulk price."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Bulk price details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkPrice"
+
+    put:
+      summary: Update a specific bulk price
+      description: "Updates an existing bulk price assigned to a product. Triggers a product update event upon update."
+      operationId: updateBulkPrice
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the bulk price."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkPriceUpdate"
+      responses:
+        "200":
+          description: "Bulk price updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkPrice"
+
+    delete:
+      summary: Delete a specific bulk price
+      description: "Deletes a specific bulk price assigned to a product. Triggers a product update event upon deletion."
+      operationId: deleteBulkPrice
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          description: "ID of the product."
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: "ID of the bulk price."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: "Bulk price deleted successfully."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    BulkPrice:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the bulk price."
+        variationId:
+          type: integer
+          description: "ID of the variation (0 if the bulk price is not for a variation)."
+        fromQuantity:
+          type: integer
+          description: "Minimum quantity for the bulk price."
+        toQuantity:
+          type: integer
+          description: "Maximum quantity for the bulk price (0 for unlimited)."
+        price:
+          type: number
+          format: float
+          description: "Price for the specified quantity range."
+
+    BulkPriceCreate:
+      type: object
+      required:
+        - fromQuantity
+        - toQuantity
+        - price
+      properties:
+        variationId:
+          type: integer
+          description: "ID of the variation."
+        fromQuantity:
+          type: integer
+          description: "Minimum quantity for the bulk price."
+        toQuantity:
+          type: integer
+          description: "Maximum quantity for the bulk price (0 for unlimited)."
+        price:
+          type: number
+          format: float
+          description: "Price for the specified quantity range."
+
+    BulkPriceUpdate:
+      type: object
+      properties:
+        fromQuantity:
+          type: integer
+          description: "Minimum quantity for the bulk price."
+        toQuantity:
+          type: integer
+          description: "Maximum quantity for the bulk price (0 for unlimited)."
+        price:
+          type: number
+          format: float
+          description: "Price for the specified quantity range."
