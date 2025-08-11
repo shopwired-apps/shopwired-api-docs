@@ -62,7 +62,7 @@ paths:
             type: string
         - name: embed
           in: query
-          description: "Comma-separated list of properties to embed. Available options: country,state,wishlists."
+          description: "Comma-separated list of properties to embed. Available options: country,state,wishlists,custom_fields."
           required: false
           schema:
             type: string
@@ -159,6 +159,12 @@ paths:
         - name: fields
           in: query
           description: "Comma-separated list of properties to include."
+          required: false
+          schema:
+            type: string
+        - name: embed
+          in: query
+          description: "Comma-separated list of properties to embed. Available options: country,state,wishlists,custom_fields."
           required: false
           schema:
             type: string
