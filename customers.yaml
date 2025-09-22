@@ -60,6 +60,12 @@ paths:
           required: false
           schema:
             type: string
+        - name: email
+          in: query
+          description: "Search customer records by email address."
+          required: false
+          schema:
+            type: string
         - name: embed
           in: query
           description: "Comma-separated list of properties to embed. Available options: country,state,wishlists,custom_fields."
