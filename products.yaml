@@ -853,6 +853,9 @@ components:
         hsCode:
           type: string
           description: "HS code for the product."
+        htsCode:
+          type: string
+          description: "US HTS code for the product."
         options:
           type: array
           description: "Product options."
@@ -1042,6 +1045,9 @@ components:
         hsCode:
           type: string
           description: "Updated HS code for the product."
+        htsCode:
+          type: string
+          description: "US HTS code for the product."
         options:
           type: array
           items:
