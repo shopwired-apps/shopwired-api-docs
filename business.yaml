@@ -159,7 +159,7 @@ components:
             liveThemeVersion:
               type: integer
               description: "The current version of the live theme."
-            archivedCanBeBought:
+            archivedProductsCanBeBought:
               type: boolean
               description: "Whether or not the admin setting is active for archived products being able to be added to the basket."
         apps:
