@@ -50,7 +50,7 @@ paths:
 
     post:
       summary: Create a custom field
-      description: "Creates a new custom field."
+      description: "Creates a new custom field. The custom fields app is installed automatically if not already installed."
       operationId: createCustomField
       security:
         - BasicAuth: []
