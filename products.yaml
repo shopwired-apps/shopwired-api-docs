@@ -664,6 +664,12 @@ components:
           type: number
           format: float
           description: "Number of reward points earned when the product is purchased."
+        additionalData:
+          type: array
+          description: "An array of additional data fields (deprecated)."
+          items:
+            type: object
+            description: "Each additional data field indexed from 0."
         outOfStockStatus:
           type: integer
           description: "The product'ss back order settings, 0 for global/account default, 1 for purchasable when out of stock, 2 for not purchasable when out of stock."
@@ -840,6 +846,12 @@ components:
           type: number
           format: float
           description: "Points earned when the product is purchased."
+        additionalData:
+          type: array
+          description: "An array of additional data fields (deprecated)."
+          items:
+            type: object
+            description: "Each additional data field indexed from 0."
         outOfStockStatus:
           type: integer
           description: "The product'ss back order settings, 0 for global/account default, 1 for purchasable when out of stock, 2 for not purchasable when out of stock."
@@ -1032,6 +1044,12 @@ components:
           type: number
           format: float
           description: "Updated number of reward points for purchasing this product."
+        additionalData:
+          type: array
+          description: "An array of additional data fields (deprecated)."
+          items:
+            type: object
+            description: "Each additional data field indexed from 0."
         outOfStockStatus:
           type: integer
           description: "The product'ss back order settings, 0 for global/account default, 1 for purchasable when out of stock, 2 for not purchasable when out of stock."
