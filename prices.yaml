@@ -59,6 +59,10 @@ components:
           type: number
           format: float
           description: "The sale price of the product."
+        sendToEbay:
+          type: boolean
+          description: "When true, the price update will also trigger an eBay listing revision (if the product is eligible for eBay). The update is processed via a background job and may be subject to eBay API rate limits and timeouts."
+          default: false
         items:
           type: array
           description: "Array of price updates. Should not be used with 'sku', 'price', or 'salePrice'. Maximum of 15 items allowed."
