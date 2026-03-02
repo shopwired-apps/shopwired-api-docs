@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Product Option Values
   description: API endpoints for managing product option values.
-  version: "1.0.0"
+  version: "1.0.1"
 
 servers:
   - url: https://api.ecommerceapi.uk/v1
@@ -110,6 +110,12 @@ components:
         name:
           type: string
           description: "The name of the product option value."
+        option:
+          type: integer
+          description: "The ID of the product option that this value is assigned to."
+        sortOrder:
+          type: integer
+          description: "The sort order of the product option value. Values with a lower number appear first."
 
     ProductOptionValueCreate:
       type: object
@@ -123,6 +129,9 @@ components:
         option:
           type: integer
           description: "The ID of the product option that the product option value is assigned to."
+        sortOrder:
+          type: integer
+          description: "Optional sort order of the product option value. Values with a lower number appear first."
 
     ProductOptionValueUpdate:
       type: object
@@ -130,3 +139,6 @@ components:
         name:
           type: string
           description: "The updated name of the product option value."
+        sortOrder:
+          type: integer
+          description: "Optional sort order of the product option value. Values with a lower number appear first."
