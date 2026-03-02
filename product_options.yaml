@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Product Options
   description: API endpoints for managing product options.
-  version: "1.0.0"
+  version: "1.0.1"
 
 servers:
   - url: https://api.ecommerceapi.uk/v1
@@ -172,6 +172,9 @@ components:
         name:
           type: string
           description: "The name of the product option."
+        sortOrder:
+          type: integer
+          description: "The sort order of the product option. Options with a lower number appear first."
         values:
           type: array
           description: "List of option values."
@@ -186,6 +189,9 @@ components:
         name:
           type: string
           description: "The name of the product option."
+        sortOrder:
+          type: integer
+          description: "Optional sort order of the product option. Options with a lower number appear first."
 
     ProductOptionUpdate:
       type: object
@@ -193,6 +199,9 @@ components:
         name:
           type: string
           description: "The updated name of the product option."
+        sortOrder:
+          type: integer
+          description: "Optional sort order of the product option. Options with a lower number appear first."
 
     ProductOptionValue:
       type: object
