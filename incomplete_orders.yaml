@@ -140,6 +140,25 @@ components:
       scheme: basic
 
   schemas:
+    AbandonedBasket:
+      type: object
+      description: "Returns abandoned basket recovery information for the incomplete order, where available."
+      properties:
+        status:
+          type: string
+          description: "Returns the abandoned basket email status."
+          enum:
+            - not_sent
+            - sent_initial
+            - sent_follow_up
+        url:
+          type: string
+          format: uri
+          description: "Returns the abandoned basket recovery URL that can be used by the customer to recover the basket and complete checkout."
+        sentAt:
+          type: string
+          description: "Returns the date/time the abandoned basket email was sent. Only present when an abandoned basket email has been sent."
+
     IncompleteOrder:
       type: object
       properties:
@@ -241,6 +260,8 @@ components:
             countryId:
               type: integer
               description: "Returns the country ID for the shipping address."
+        abandonedBasket:
+          $ref: "#/components/schemas/AbandonedBasket"
         paymentMethod:
           type: string
           description: "Returns the payment method used for the order (if available)."
@@ -437,7 +458,7 @@ components:
                 items:
                   type: object
                   properties:
-                    name: 
+                    name:
                       type: string
                       description: "The name of the constituent product."
                     sku:
@@ -525,7 +546,6 @@ components:
         customFields:
           type: array
           description: "Returns custom fields associated with the incomplete order. The object consists of key-value pairs where the key is the custom field name and the value is the custom field value."
-          additionalProperties:
           items:
             type: object
             properties:
@@ -582,7 +602,6 @@ components:
                       jurisdiction:
                         type: string
                         description: "The name of the tax jurisdiction."
-
                 lineItems:
                   type: array
                   description: "An array of tax details for each line item."
