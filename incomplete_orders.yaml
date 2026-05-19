@@ -262,9 +262,6 @@ components:
               description: "Returns the country ID for the shipping address."
         abandonedBasket:
           $ref: "#/components/schemas/AbandonedBasket"
-        paymentMethod:
-          type: string
-          description: "Returns the payment method used for the order (if available)."
         total:
           type: number
           description: "Returns the grand total value of the incomplete order."
