@@ -249,9 +249,6 @@ components:
         active:
           type: boolean
           description: "Whether the brand is active."
-        featured:
-          type: boolean
-          description: "Whether the brand is featured."
         sortOrder:
           type: integer
           description: "The position/order of the brand when displayed in lists."
