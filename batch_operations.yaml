@@ -1,0 +1,261 @@
+openapi: 3.1.0
+info:
+  title: Batch Operations
+  description: API endpoints for batch operations and items edited through batch operations.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+
+paths:
+  /batch-operations:
+    get:
+      summary: List batch operations
+      description: "Retrieves a list of batch operations with pagination."
+      operationId: listBatchOperations
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "A list of batch operations."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BatchOperation"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /batch-operations/count:
+    get:
+      summary: Get total batch operation count
+      description: "Retrieves the total number of batch operations."
+      operationId: getBatchOperationCount
+      security:
+        - BasicAuth: []
+      responses:
+        "200":
+          description: "The total count of batch operations."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of batch operations."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+  /batch-operations/{id}:
+    get:
+      summary: Get a specific batch operation
+      description: "Retrieves a single batch operation by ID."
+      operationId: getBatchOperationById
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the batch operation."
+          required: true
+          schema:
+            type: integer
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+          example: "id,type"
+      responses:
+        "200":
+          description: "The batch operation details."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchOperationWithCount"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+
+  /batch-operations/{id}/items:
+    get:
+      summary: List batch operation items
+      description: "Retrieve all batch operation items from a batch operation."
+      operationId: listBatchOperationItems
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the batch operation."
+          required: true
+          schema:
+            type: integer
+        - name: count
+          in: query
+          description: "Number of records to retrieve (default: 50, max: 100)."
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          description: "Number of records to skip."
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: fields
+          in: query
+          description: "Comma-separated list of fields to include in the response."
+          required: false
+          schema:
+            type: string
+          example: "itemId,data"
+      responses:
+        "200":
+          description: "A list of batch operation items."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BatchOperationItem"
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+  
+  
+  /batch-operations/{id}/items/count:
+    get:
+      summary: Get total batch operation item count
+      description: "Retrieves the total number of batch operation items in a batch operation."
+      operationId: getBatchOperationItemCount
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: "The unique identifier of the batch operation."
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "The total count of items in the batch operation."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: "The total number of items in the batch operation."
+                    example: 207
+        "400":
+          description: "Invalid request parameters."
+        "401":
+          description: "Unauthorized. Invalid or missing API key."
+        "500":
+          description: "Server error."
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    BatchOperation:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the batch operation."
+        completedAt:
+          type: string
+          description: "The time that the operation was completed at."
+        type:
+          type: string
+          description: "The type of batch-operation e.g \"import\"."
+        itemType:
+          type: string
+          description: "The type of item edited in the import e.g \"product\"."
+  
+    BatchOperationWithCount:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "Unique identifier for the batch operation."
+        completedAt:
+          type: string
+          description: "The time that the operation was completed at."
+        type:
+          type: string
+          description: "The type of batch operation e.g \"import\"."
+        itemType:
+          type: string
+          description: "The type of item edited in the batch operation e.g \"product\"."
+        itemCount:
+          type: integer
+          description: "The number of items edited in the batch operation."
+
+    BatchOperationItem:
+      type: object
+      properties:
+        itemType:
+          type: string
+          description: "The type of item e.g \"product\"."
+        itemId:
+          type: integer
+          description: "The unique identifier of the item."
+        isNew:
+          type: boolean
+          description: "Whether or not the item was created during the batch operation."
+        data:
+          type: object
+          description: "The item data in JSON format"
