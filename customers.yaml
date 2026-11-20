@@ -78,8 +78,6 @@ paths:
           required: false
           schema:
             type: string
-          example: "123,456,789"
-        - name: count
       responses:
         "200":
           description: "A list of customers."
