@@ -1,0 +1,444 @@
+openapi: 3.1.0
+info:
+  title: Historical order import
+  description: API endpoint for importing historical orders into ShopWired.
+  version: "1.0.0"
+
+servers:
+  - url: https://api.ecommerceapi.uk/v1
+    description: Production API server
+  - url: https://api.stagingdns.co.uk/v1
+    description: Staging API server
+
+paths:
+  /orders/import:
+    post:
+      summary: Import a historical order
+      description: |
+        Imports one historical order per request.
+        Products, variations, choices and extras must already exist in the destination
+        account. Status and product IDs must be ShopWired IDs, not source-platform IDs.
+        Shipping rates do not need to exist beforehand.
+
+        The basket system is bypassed. Supply accurate historical prices, tax amounts,
+        VAT rates and totals; these are not recalculated or checked for consistency.
+        Stock is not updated and order emails are not sent. Order events and webhooks
+        may still be triggered.
+
+        Customer IDs, currency, discount objects and refund transactions cannot be
+        supplied through this endpoint. Do not infer historical tax or other missing
+        financial amounts from current catalogue prices.
+
+      operationId: importHistoricalOrder
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HistoricalOrderImport"
+            examples:
+              minimal:
+                summary: Required fields only
+                description: Replace status and product IDs with IDs from the destination account.
+                value:
+                  reference: 1234
+                  status: 529
+                  billingAddress:
+                    country: 222
+                  shippingAddress:
+                    country: 222
+                  values:
+                    total: 12
+                    subTotal: 10
+                    subTotalIncludingTax: 12
+                  products:
+                    - id: 457190
+                      quantity: 1
+                      price: 10
+                      priceTax: 2
+                      total: 10
+                      totalTax: 2
+              withShipping:
+                summary: Historical order with VAT, addresses and shipping
+                description: Replace status and product IDs with IDs from the destination account.
+                value:
+                  reference: 1235
+                  status: 529
+                  transactionId: "HISTORICAL-1235"
+                  comments: "Imported historical order."
+                  creationDate: "Wed, 15 Jan 2020 12:34:56 +0000"
+                  values:
+                    total: 18
+                    subTotal: 10
+                    subTotalIncludingTax: 12
+                    originalSubTotal: 10
+                    originalSubTotalIncludingTax: 12
+                    shippingTotal: 5
+                    shippingTotalIncludingTax: 6
+                    originalShippingTotal: 5
+                    originalShippingTotalIncludingTax: 6
+                    vatTotal: 3
+                    vatRate: 20
+                  shippingOption:
+                    name: "Standard delivery"
+                    price: 5
+                    vatRate: 20
+                  billingAddress:
+                    name: "Example Customer"
+                    emailAddress: "customer@example.test"
+                    addressLine1: "1 Example Street"
+                    city: "Birmingham"
+                    postcode: "B1 1AA"
+                    country: 222
+                    province: "West Midlands"
+                  shippingAddress:
+                    name: "Example Customer"
+                    addressLine1: "1 Example Street"
+                    city: "Birmingham"
+                    postcode: "B1 1AA"
+                    country: 222
+                    province: "West Midlands"
+                  products:
+                    - id: 457190
+                      quantity: 1
+                      title: "Historical product title"
+                      sku: "HISTORICAL-SKU"
+                      price: 10
+                      priceTax: 2
+                      total: 10
+                      totalTax: 2
+                      vatRate: 20
+                      originalPrice: 10
+                      originalPriceIncludingTax: 12
+                      originalTotal: 10
+                      originalTotalIncludingTax: 12
+      responses:
+        "201":
+          description: Historical order imported successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HistoricalOrderImportResponse"
+              example:
+                id: 1234
+        "401":
+          description: Unauthorized. Invalid or missing API credentials.
+        "403":
+          description: Forbidden. The API credentials do not have the write_orders permission.
+        "422":
+          description: Missing, invalid or unsupported request data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+              examples:
+                missingProperty:
+                  value:
+                    code: 5
+                    message: "The reference property is missing or empty"
+                invalidProperty:
+                  value:
+                    code: 6
+                    message: "The products[0].price property has an invalid value"
+                unsupportedProperty:
+                  value:
+                    code: 7
+                    message: "The shipping property is not allowed in the current context"
+        "500":
+          description: Server error. Reconcile whether an order was created before retrying.
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+      description: Use the API key as the username and the API secret as the password.
+
+  schemas:
+    HistoricalOrderImport:
+      type: object
+      additionalProperties: false
+      required:
+        - reference
+        - status
+        - billingAddress
+        - shippingAddress
+        - values
+        - products
+      properties:
+        reference:
+          type: integer
+          description: Historical order reference. Does not have to be unique; duplicates are not prevented.
+        status:
+          type: integer
+          description: ID of an existing order status in the destination ShopWired account.
+        transactionId:
+          type: string
+          maxLength: 128
+          description: Historical transaction identifier. Maximum 128 bytes. Does not provide duplicate protection.
+        comments:
+          type: string
+          maxLength: 65000
+          description: Historical order comments. Maximum 65000 bytes.
+        creationDate:
+          type: string
+          description: Historical order creation date. Supply an RFC 2822 date with an explicit timezone offset.
+          example: "Wed, 15 Jan 2020 12:34:56 +0000"
+        values:
+          $ref: "#/components/schemas/HistoricalOrderValues"
+        shippingOption:
+          $ref: "#/components/schemas/HistoricalShippingOption"
+        billingAddress:
+          $ref: "#/components/schemas/HistoricalOrderAddress"
+        shippingAddress:
+          $ref: "#/components/schemas/HistoricalOrderAddress"
+        products:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Historical product lines. Maximum 100 lines per order.
+          items:
+            $ref: "#/components/schemas/HistoricalOrderProduct"
+
+    HistoricalOrderValues:
+      type: object
+      additionalProperties: false
+      required:
+        - total
+        - subTotal
+        - subTotalIncludingTax
+      dependentRequired:
+        shippingTotal:
+          - shippingTotalIncludingTax
+        vatTotal:
+          - vatRate
+      properties:
+        total:
+          type: number
+          description: Final order total including tax.
+        subTotal:
+          type: number
+          description: Product subtotal excluding tax.
+        subTotalIncludingTax:
+          type: number
+          description: Product subtotal including tax.
+        originalSubTotal:
+          type: number
+          description: Original product subtotal excluding tax, before discounts.
+        originalSubTotalIncludingTax:
+          type: number
+          description: Original product subtotal including tax, before discounts.
+        shippingTotal:
+          type: number
+          description: Shipping total excluding tax. Requires shippingTotalIncludingTax when supplied.
+        shippingTotalIncludingTax:
+          type: number
+          description: Shipping total including tax.
+        originalShippingTotal:
+          type: number
+          description: Original shipping total excluding tax, before discounts.
+        originalShippingTotalIncludingTax:
+          type: number
+          description: Original shipping total including tax, before discounts.
+        vatTotal:
+          type: number
+          description: Total order VAT amount. Requires vatRate when supplied.
+        vatRate:
+          type: number
+          description: Order VAT percentage, for example 20 for 20 percent. Supply the historical value.
+
+    HistoricalShippingOption:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          description: Historical shipping method name. Maximum 100 bytes. Not linked to an existing shipping rate.
+        price:
+          type: number
+          description: Historical shipping price excluding tax.
+        vatRate:
+          type: number
+          default: 0
+          description: Shipping VAT percentage. Defaults to zero.
+
+    HistoricalOrderAddress:
+      type: object
+      additionalProperties: false
+      required:
+        - country
+      allOf:
+        - if:
+            properties:
+              country:
+                const: 223
+            required:
+              - country
+          else:
+            properties:
+              state: false
+      properties:
+        name:
+          type: string
+          maxLength: 128
+          description: Full name. Maximum 128 bytes.
+        companyName:
+          type: string
+          maxLength: 128
+          description: Company name. Maximum 128 bytes.
+        emailAddress:
+          type: string
+          format: email
+          maxLength: 128
+          description: Email address. Maximum 128 bytes. The billing email is used to match an existing customer account.
+        telephone:
+          type: string
+          maxLength: 128
+          description: Telephone number. Maximum 128 bytes.
+        addressLine1:
+          type: string
+          maxLength: 128
+          description: First address line. Maximum 128 bytes.
+        addressLine2:
+          type: string
+          maxLength: 128
+          description: Second address line. Maximum 128 bytes.
+        addressLine3:
+          type: string
+          maxLength: 128
+          description: Third address line. Maximum 128 bytes.
+        city:
+          type: string
+          maxLength: 128
+          description: City. Maximum 128 bytes.
+        postcode:
+          type: string
+          maxLength: 16
+          description: Postcode or ZIP code. Maximum 16 bytes.
+        country:
+          type: integer
+          description: ShopWired country ID, for example 222 for the United Kingdom or 223 for the United States. Not an ISO code.
+        province:
+          type: string
+          maxLength: 100
+          description: County or province for countries outside the United States. Maximum 100 bytes. Not used for US addresses.
+        state:
+          type: string
+          description: Valid two-letter US state code, for example CA. Only allowed when country is 223.
+          example: "CA"
+
+    HistoricalOrderProduct:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - quantity
+        - price
+        - priceTax
+        - total
+        - totalTax
+      properties:
+        id:
+          type: integer
+          description: ID of an existing product in the destination ShopWired account.
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity ordered. Must be a positive integer.
+        title:
+          type: string
+          maxLength: 256
+          description: Historical product title. Defaults to the current product title when omitted. Maximum 256 bytes.
+        sku:
+          type: string
+          maxLength: 128
+          description: Historical SKU. Supply explicitly to preserve it. Maximum 128 bytes.
+        gtin:
+          type: string
+          maxLength: 16
+          description: Historical GTIN. Maximum 16 bytes.
+        mpn:
+          type: string
+          maxLength: 32
+          description: Historical manufacturer part number. Maximum 32 bytes.
+        comments:
+          type: string
+          maxLength: 65000
+          description: Historical product line comments. Maximum 65000 bytes.
+        price:
+          type: number
+          minimum: 0
+          description: Unit price excluding tax. Negative unit prices are not supported.
+        priceTax:
+          type: number
+          description: Tax amount per unit, not the VAT percentage or tax-inclusive unit price.
+        total:
+          type: number
+          description: Product line total excluding tax. Supply the historical total, including any source rounding.
+        totalTax:
+          type: number
+          description: Tax amount for the complete product line.
+        costPrice:
+          type: number
+          description: Historical unit cost price.
+        weight:
+          type: number
+          description: Historical product weight.
+        vatRate:
+          type: number
+          description: Historical product VAT percentage, for example 20 for 20 percent.
+        originalPrice:
+          type: number
+          description: Original unit price excluding tax, before discounts.
+        originalPriceIncludingTax:
+          type: number
+          description: Original unit price including tax, before discounts.
+        originalTotal:
+          type: number
+          description: Original product line total excluding tax, before discounts.
+        originalTotalIncludingTax:
+          type: number
+          description: Original product line total including tax, before discounts.
+        variation:
+          type: integer
+          description: ID of an existing ShopWired variation belonging to this product.
+        choices:
+          type: array
+          maxItems: 20
+          description: Existing ShopWired choice IDs belonging to this product. Maximum 20.
+          items:
+            type: integer
+        extras:
+          type: array
+          maxItems: 20
+          description: Existing ShopWired extra IDs belonging to this product. Maximum 20.
+          items:
+            type: integer
+
+    HistoricalOrderImportResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          description: ID of the newly created ShopWired order.
+
+    ValidationError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: API error code. Observed validation codes are 5 (missing), 6 (invalid) and 7 (not allowed).
+        message:
+          type: string
+          description: Description of the validation failure, including the affected property.
