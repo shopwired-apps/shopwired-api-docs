@@ -72,6 +72,14 @@ paths:
           required: false
           schema:
             type: string
+        - name: ids
+          in: query
+          description: "Comma-separated list of customer IDs to return."
+          required: false
+          schema:
+            type: string
+          example: "123,456,789"
+        - name: count
       responses:
         "200":
           description: "A list of customers."
