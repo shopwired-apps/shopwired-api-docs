@@ -1,0 +1,2907 @@
+# GENERATED from subscriptions/openapi.yaml and its referenced documentation files.
+# Edit those source files and re-bundle; this standalone import artifact is not hand-maintained.
+openapi: 3.1.0
+info:
+  title: ShopWired Subscriptions API
+  version: 1.0.0
+  description: |-
+    Subscription plans, contracts, renewal intents, billing attempts, standalone charges,
+    payment-method update links, related business settings, and subscription webhooks.
+
+    All resource IDs are ShopWired IDs scoped to the authenticated business. JSON request
+    bodies are used for writes. Optional null resource fields are normally omitted.
+    Amounts use major currency units; prices on contract items exclude VAT. Timestamps
+    in resources use RFC 1123; creation-date query filters use ISO 8601.
+
+    Use X-ShopWired-Resource-Version only where the operation declares it: plan PUT/DELETE,
+    contract PUT and contract-item PUT. Plan items, renewal intents, billing attempts and
+    standalone charges are not versioned. Creating a renewal intent instead requires the
+    latest parent contractVersion in the body. Child operations can change the parent
+    contract version. Re-read before subsequent versioned writes.
+
+    Idempotency keys reject reuse; they do not provide replay or exact-key lookup. Persist
+    keys and returned IDs. On an uncertain mutation response, reconcile before retrying.
+    HTTP 201 on a billing attempt or standalone charge means the resource was created;
+    inspect status for the payment outcome. Per T13166, Platform can report provider/API
+    errors and timeouts as failed; no separate certainty or provider-reference fields
+    were agreed. The specification does not invent such fields.
+
+    The existing basket API supplies subscription-change quotes (up to 50 basket items),
+    including applicable shipping/VAT. It is not a new subscription endpoint. Renewal
+    orders use the ordinary order API plus RenewalOrderSubscriptionFields. After T13192,
+    order responses use hasSubscriptionContracts; the request still needs
+    subscriptionContractId and the other subscription references.
+
+    Prepared 26 November 2026 from inspected Platform snapshots, application integration
+    evidence, and supplied final decisions in T12346, T13100, T13166 and T13192. Later task
+    decisions override the older snapshots for settings and order reads. This document
+    is not a fresh acceptance test of every live endpoint. See the companion README
+    for provenance and the remaining verification limits.
+servers:
+- url: https://api.ecommerceapi.uk/v1
+  description: Production API server
+- url: https://api.stagingdns.co.uk/v1
+  description: Staging API server
+security:
+- OAuthBearer: []
+tags:
+- name: Plans
+- name: Plan items
+- name: Contracts
+- name: Contract items
+- name: Renewal intents
+- name: Billing attempts
+- name: Standalone charges
+- name: Payment methods
+- name: Business settings
+- name: Webhooks
+paths:
+  "/subscription/plans":
+    get:
+      operationId: listPlans
+      summary: List plans
+      tags:
+      - Plans
+      description: >-
+        Requires the read_subscription_plans permission. Plans may be edited; existing contracts retain
+        their snapshots. Name/enabled changes do not necessarily increment the version.
+      x-required-scopes:
+      - read_subscription_plans
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Plan"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Count"
+      - "$ref": "#/components/parameters/Offset"
+      - "$ref": "#/components/parameters/Sort"
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - "$ref": "#/components/parameters/Fields"
+      - name: embed
+        in: query
+        required: false
+        description: 'Comma-separated embeds: items.'
+        schema:
+          type: string
+    post:
+      operationId: createPlan
+      summary: Create plan
+      tags:
+      - Plans
+      description: >-
+        Requires the write_subscription_plans permission. Plans default to disabled. No contract is created
+        by creating a plan.
+      x-required-scopes:
+      - write_subscription_plans
+      responses:
+        '201':
+          description: Created. Inspect the resource status; HTTP 201 alone does not mean payment succeeded.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Plan"
+              example:
+                id: 101
+                version: 1
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                enabled: false
+                name: Monthly plan
+                interval: month
+                intervalCount: 1
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/PlanCreate"
+            example:
+              name: Monthly plan
+              enabled: false
+              interval: month
+              intervalCount: 1
+              priceModifierType: none
+  "/subscription/plans/count":
+    get:
+      operationId: countPlans
+      summary: Count plans
+      tags:
+      - Plans
+      description: Requires the read_subscription_plans permission.
+      x-required-scopes:
+      - read_subscription_plans
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Count"
+              example:
+                count: 3
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+  "/subscription/plans/{id}":
+    parameters:
+    - "$ref": "#/components/parameters/id"
+    get:
+      operationId: getPlan
+      summary: Get plan
+      tags:
+      - Plans
+      description: >-
+        Requires the read_subscription_plans permission. Plans may be edited; existing contracts retain
+        their snapshots. Name/enabled changes do not necessarily increment the version.
+      x-required-scopes:
+      - read_subscription_plans
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Plan"
+              example:
+                id: 101
+                version: 1
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                enabled: false
+                name: Monthly plan
+                interval: month
+                intervalCount: 1
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Fields"
+      - name: embed
+        in: query
+        required: false
+        description: 'Comma-separated embeds: items.'
+        schema:
+          type: string
+    put:
+      operationId: updatePlan
+      summary: Update plan
+      tags:
+      - Plans
+      description: >-
+        Requires the write_subscription_plans permission. Partial field update. Use the latest version.
+        Price/interval/trial changes affect future use of the plan, not existing contracts.
+      x-required-scopes:
+      - write_subscription_plans
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Plan"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/PlanWrite"
+            example:
+              enabled: true
+    delete:
+      operationId: deletePlan
+      summary: Delete plan
+      tags:
+      - Plans
+      description: >-
+        Requires the write_subscription_plans permission. Existing contracts retain their snapshots. Supply
+        the current resource version.
+      x-required-scopes:
+      - write_subscription_plans
+      responses:
+        '204':
+          description: Deleted; no response body.
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Version"
+  "/subscription/plans/{plan_id}/items":
+    parameters:
+    - "$ref": "#/components/parameters/plan_id"
+    get:
+      operationId: listPlanItems
+      summary: List plan items
+      tags:
+      - Plan items
+      description: >-
+        Requires the read_subscription_plans permission. Immutable product/SKU links. No PUT endpoint,
+        version or creation timestamp.
+      x-required-scopes:
+      - read_subscription_plans
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/PlanItem"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Count"
+      - "$ref": "#/components/parameters/Offset"
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/Fields"
+    post:
+      operationId: createPlanItem
+      summary: Create plan item
+      tags:
+      - Plan items
+      description: >-
+        Requires the write_subscription_plans permission. The product must belong to this business. Duplicate
+        plan/product/SKU combinations are rejected. SKU validity is checked again when used.
+      x-required-scopes:
+      - write_subscription_plans
+      responses:
+        '201':
+          description: Created. Inspect the resource status; HTTP 201 alone does not mean payment succeeded.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/PlanItem"
+              example:
+                id: 102
+                planId: 101
+                productId: 201
+                sku: EXAMPLE-SKU
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/PlanItemCreate"
+            example:
+              productId: 201
+              sku: EXAMPLE-SKU
+  "/subscription/plans/{plan_id}/items/count":
+    parameters:
+    - "$ref": "#/components/parameters/plan_id"
+    get:
+      operationId: countPlanItems
+      summary: Count plan items
+      tags:
+      - Plan items
+      description: Requires the read_subscription_plans permission.
+      x-required-scopes:
+      - read_subscription_plans
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Count"
+              example:
+                count: 3
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/SinceId"
+  "/subscription/plans/{plan_id}/items/{id}":
+    parameters:
+    - "$ref": "#/components/parameters/plan_id"
+    - "$ref": "#/components/parameters/id"
+    get:
+      operationId: getPlanItem
+      summary: Get plan item
+      tags:
+      - Plan items
+      description: >-
+        Requires the read_subscription_plans permission. Immutable product/SKU links. No PUT endpoint,
+        version or creation timestamp.
+      x-required-scopes:
+      - read_subscription_plans
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/PlanItem"
+              example:
+                id: 102
+                planId: 101
+                productId: 201
+                sku: EXAMPLE-SKU
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Fields"
+    delete:
+      operationId: deletePlanItem
+      summary: Delete plan item
+      tags:
+      - Plan items
+      description: >-
+        Requires the write_subscription_plans permission. Existing contracts retain their snapshots. No
+        resource-version header is required.
+      x-required-scopes:
+      - write_subscription_plans
+      responses:
+        '204':
+          description: Deleted; no response body.
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+  "/subscription/contracts":
+    get:
+      operationId: listContracts
+      summary: List contracts
+      tags:
+      - Contracts
+      description: >-
+        Requires the read_subscription_contracts permission. Contracts are created by checkout. There
+        is no public POST or DELETE contract route.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Contract"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Count"
+      - "$ref": "#/components/parameters/Offset"
+      - "$ref": "#/components/parameters/Sort"
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - name: status
+        in: query
+        required: false
+        description: Filter by current status.
+        schema:
+          "$ref": "#/components/schemas/ContractStatus"
+      - name: customer_id
+        in: query
+        required: false
+        description: Filter by ShopWired customer ID.
+        schema:
+          type: integer
+          minimum: 0
+      - "$ref": "#/components/parameters/Fields"
+      - name: embed
+        in: query
+        required: false
+        description: 'Comma-separated embeds: items,item_availability.'
+        schema:
+          type: string
+  "/subscription/contracts/count":
+    get:
+      operationId: countContracts
+      summary: Count contracts
+      tags:
+      - Contracts
+      description: Requires the read_subscription_contracts permission.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Count"
+              example:
+                count: 3
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - name: status
+        in: query
+        required: false
+        description: Filter by current status.
+        schema:
+          "$ref": "#/components/schemas/ContractStatus"
+      - name: customer_id
+        in: query
+        required: false
+        description: Filter by ShopWired customer ID.
+        schema:
+          type: integer
+          minimum: 0
+  "/subscription/contracts/{id}":
+    parameters:
+    - "$ref": "#/components/parameters/id"
+    get:
+      operationId: getContract
+      summary: Get contract
+      tags:
+      - Contracts
+      description: >-
+        Requires the read_subscription_contracts permission. Contracts are created by checkout. There
+        is no public POST or DELETE contract route.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Contract"
+              example:
+                id: 301
+                version: 4
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                customerId: 901
+                status: active
+                interval: month
+                intervalCount: 1
+                currency: GBP
+                initialOrderId: 1001
+                paymentMethod: shopwired_payments
+                editable: true
+                planDetails:
+                  id: 101
+                  version: 1
+                  name: Monthly plan
+                  interval: month
+                  intervalCount: 1
+                  cycleLimit: 0
+                  trialDays: 0
+                billingCustomerDetails:
+                  name: Example Customer
+                  emailAddress: customer@example.test
+                  countryId: 222
+                shippingCustomerDetails:
+                  name: Example Customer
+                  emailAddress: customer@example.test
+                  countryId: 222
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Fields"
+      - name: embed
+        in: query
+        required: false
+        description: 'Comma-separated embeds: items,item_availability.'
+        schema:
+          type: string
+    put:
+      operationId: updateContract
+      summary: Update contract
+      tags:
+      - Contracts
+      description: >-
+        Requires the write_subscription_contracts permission. Partial update; address objects replace
+        the entire address. Cancelled contracts cannot be edited. Pause/cancel propagates to active renewal
+        work; refresh child resources after changes.
+      x-required-scopes:
+      - write_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Contract"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ContractUpdate"
+            example:
+              status: paused
+  "/subscription/contracts/{contract_id}/items":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    get:
+      operationId: listContractItems
+      summary: List contract items
+      tags:
+      - Contract items
+      description: >-
+        Requires the read_subscription_contracts permission. No DELETE endpoint; cancel an item using
+        PUT. Child changes can advance the parent contract version.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/ContractItem"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Count"
+      - "$ref": "#/components/parameters/Offset"
+      - "$ref": "#/components/parameters/Sort"
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - "$ref": "#/components/parameters/Fields"
+      - name: embed
+        in: query
+        required: false
+        description: 'Comma-separated embeds: availability.'
+        schema:
+          type: string
+    post:
+      operationId: createContractItem
+      summary: Create contract item
+      tags:
+      - Contract items
+      description: >-
+        Requires the write_subscription_contracts permission. Requires an editable parent. Product identity
+        is set on creation; price is excluding VAT. No parent-version header is used for this POST.
+      x-required-scopes:
+      - write_subscription_contracts
+      responses:
+        '201':
+          description: Created. Inspect the resource status; HTTP 201 alone does not mean payment succeeded.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ContractItem"
+              example:
+                id: 302
+                version: 1
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                contractId: 301
+                status: active
+                productId: 201
+                sku: EXAMPLE-SKU
+                isVariation: false
+                originalPrice: 10
+                originalValueAddedTaxRate: 20
+                price: 10
+                valueAddedTaxRate: 20
+                quantity: 1
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ContractItemCreate"
+            example:
+              productId: 201
+              sku: EXAMPLE-SKU
+              price: 10
+              valueAddedTaxRate: 20
+              quantity: 1
+              status: active
+  "/subscription/contracts/{contract_id}/items/count":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    get:
+      operationId: countContractItems
+      summary: Count contract items
+      tags:
+      - Contract items
+      description: Requires the read_subscription_contracts permission.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Count"
+              example:
+                count: 3
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+  "/subscription/contracts/{contract_id}/items/{id}":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    - "$ref": "#/components/parameters/id"
+    get:
+      operationId: getContractItem
+      summary: Get contract item
+      tags:
+      - Contract items
+      description: >-
+        Requires the read_subscription_contracts permission. No DELETE endpoint; cancel an item using
+        PUT. Child changes can advance the parent contract version.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ContractItem"
+              example:
+                id: 302
+                version: 1
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                contractId: 301
+                status: active
+                productId: 201
+                sku: EXAMPLE-SKU
+                isVariation: false
+                originalPrice: 10
+                originalValueAddedTaxRate: 20
+                price: 10
+                valueAddedTaxRate: 20
+                quantity: 1
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Fields"
+      - name: embed
+        in: query
+        required: false
+        description: 'Comma-separated embeds: availability.'
+        schema:
+          type: string
+    put:
+      operationId: updateContractItem
+      summary: Update contract item
+      tags:
+      - Contract items
+      description: >-
+        Requires the write_subscription_contracts permission. Requires an editable parent and the current
+        item version. Only status, price, VAT rate and quantity can change; cancelled items cannot resume.
+      x-required-scopes:
+      - write_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ContractItem"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ContractItemUpdate"
+            example:
+              quantity: 2
+  "/subscription/contracts/{contract_id}/renewal-intents":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    get:
+      operationId: listRenewalIntents
+      summary: List renewal intents
+      tags:
+      - Renewal intents
+      description: >-
+        Requires the read_subscription_contracts permission. Unversioned resource. No DELETE or exact
+        idempotency-key lookup. A failed intent is terminal.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/RenewalIntent"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Count"
+      - "$ref": "#/components/parameters/Offset"
+      - "$ref": "#/components/parameters/CompletedSort"
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - name: status
+        in: query
+        required: false
+        description: Filter by current status.
+        schema:
+          "$ref": "#/components/schemas/RenewalIntentStatus"
+      - "$ref": "#/components/parameters/Fields"
+    post:
+      operationId: createRenewalIntent
+      summary: Create renewal intent
+      tags:
+      - Renewal intents
+      description: >-
+        Requires the write_subscription_contracts permission. Requires an active/paused contract with
+        no active renewal lock. contractVersion is the latest parent version in the JSON body. Offline
+        contracts enter awaiting_order; online contracts enter pending. The app chooses the amount.
+      x-required-scopes:
+      - write_subscription_contracts
+      responses:
+        '201':
+          description: Created. Inspect the resource status; HTTP 201 alone does not mean payment succeeded.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/RenewalIntent"
+              example:
+                id: 401
+                contractId: 301
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                status: pending
+                amount: 25
+                currency: GBP
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RenewalIntentCreate"
+            example:
+              contractVersion: 4
+              idempotencyKey: contract-301-cycle-2-intent-1
+              amount: 25
+  "/subscription/contracts/{contract_id}/renewal-intents/count":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    get:
+      operationId: countRenewalIntents
+      summary: Count renewal intents
+      tags:
+      - Renewal intents
+      description: Requires the read_subscription_contracts permission.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Count"
+              example:
+                count: 3
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - name: status
+        in: query
+        required: false
+        description: Filter by current status.
+        schema:
+          "$ref": "#/components/schemas/RenewalIntentStatus"
+  "/subscription/contracts/{contract_id}/renewal-intents/{id}":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    - "$ref": "#/components/parameters/id"
+    get:
+      operationId: getRenewalIntent
+      summary: Get renewal intent
+      tags:
+      - Renewal intents
+      description: >-
+        Requires the read_subscription_contracts permission. Unversioned resource. No DELETE or exact
+        idempotency-key lookup. A failed intent is terminal.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/RenewalIntent"
+              example:
+                id: 401
+                contractId: 301
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                status: pending
+                amount: 25
+                currency: GBP
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Fields"
+    put:
+      operationId: updateRenewalIntent
+      summary: Update renewal intent
+      tags:
+      - Renewal intents
+      description: >-
+        Requires the write_subscription_contracts permission. Externally transition an active intent to
+        failed. No version header. Does not establish that a provider authorisation was successfully voided.
+      x-required-scopes:
+      - write_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/RenewalIntent"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/FailResource"
+            example:
+              status: failed
+              failureReason: cancelled_by_app
+  "/subscription/contracts/{contract_id}/renewal-intents/{renewal_intent_id}/billing-attempts":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    - "$ref": "#/components/parameters/renewal_intent_id"
+    get:
+      operationId: listBillingAttempts
+      summary: List billing attempts
+      tags:
+      - Billing attempts
+      description: >-
+        Requires the read_subscription_contracts permission. Unversioned resource. No DELETE or exact
+        idempotency-key lookup. Status is a Platform report; payment_failed can also represent a provider/API
+        timeout (T13166).
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/BillingAttempt"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Count"
+      - "$ref": "#/components/parameters/Offset"
+      - "$ref": "#/components/parameters/CompletedSort"
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - name: status
+        in: query
+        required: false
+        description: Filter by current status.
+        schema:
+          "$ref": "#/components/schemas/BillingAttemptStatus"
+      - "$ref": "#/components/parameters/Fields"
+    post:
+      operationId: createBillingAttempt
+      summary: Create billing attempt
+      tags:
+      - Billing attempts
+      description: >-
+        Requires the write_subscription_contracts permission. Charges the saved payment method. Requires
+        a pending intent with no active billing attempt. Reconcile returned status and intent before creating
+        an order or retrying. No interactive authentication flow is defined here.
+      x-required-scopes:
+      - write_subscription_contracts
+      responses:
+        '201':
+          description: Created. Inspect the resource status; HTTP 201 alone does not mean payment succeeded.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/BillingAttempt"
+              example:
+                id: 501
+                renewalIntentId: 401
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                status: requires_capture
+                paymentMethod: shopwired_payments
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/BillingAttemptCreate"
+            example:
+              idempotencyKey: contract-301-cycle-2-attempt-1
+  "/subscription/contracts/{contract_id}/renewal-intents/{renewal_intent_id}/billing-attempts/count":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    - "$ref": "#/components/parameters/renewal_intent_id"
+    get:
+      operationId: countBillingAttempts
+      summary: Count billing attempts
+      tags:
+      - Billing attempts
+      description: Requires the read_subscription_contracts permission.
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Count"
+              example:
+                count: 3
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/CreatedBefore"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - name: status
+        in: query
+        required: false
+        description: Filter by current status.
+        schema:
+          "$ref": "#/components/schemas/BillingAttemptStatus"
+  "/subscription/contracts/{contract_id}/renewal-intents/{renewal_intent_id}/billing-attempts/{id}":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    - "$ref": "#/components/parameters/renewal_intent_id"
+    - "$ref": "#/components/parameters/id"
+    get:
+      operationId: getBillingAttempt
+      summary: Get billing attempt
+      tags:
+      - Billing attempts
+      description: >-
+        Requires the read_subscription_contracts permission. Unversioned resource. No DELETE or exact
+        idempotency-key lookup. Status is a Platform report; payment_failed can also represent a provider/API
+        timeout (T13166).
+      x-required-scopes:
+      - read_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/BillingAttempt"
+              example:
+                id: 501
+                renewalIntentId: 401
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                status: requires_capture
+                paymentMethod: shopwired_payments
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Fields"
+    put:
+      operationId: updateBillingAttempt
+      summary: Update billing attempt
+      tags:
+      - Billing attempts
+      description: >-
+        Requires the write_subscription_contracts permission. Externally transition an active attempt
+        to failed. No version header. Terminal attempts cannot be reset; this response is not proof of
+        a provider-side void.
+      x-required-scopes:
+      - write_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/BillingAttempt"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/FailResource"
+            example:
+              status: failed
+              failureReason: cancelled_by_app
+  "/subscription/contracts/{contract_id}/standalone-charges":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    get:
+      operationId: listStandaloneCharges
+      summary: List standalone charges
+      tags:
+      - Standalone charges
+      description: >-
+        Requires the read_subscription_standalone_charges permission. No PUT or DELETE route. No resource
+        version or idempotency-key lookup.
+      x-required-scopes:
+      - read_subscription_standalone_charges
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/StandaloneCharge"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Count"
+      - "$ref": "#/components/parameters/Offset"
+      - "$ref": "#/components/parameters/SinceId"
+      - "$ref": "#/components/parameters/Fields"
+    post:
+      operationId: createStandaloneCharge
+      summary: Create standalone charge
+      tags:
+      - Standalone charges
+      description: >-
+        Requires the write_subscription_standalone_charges permission. Immediately attempts a separate
+        charge using the saved payment method. The parent must be active or paused. Inspect status; this
+        does not create a renewal order or advance a billing schedule.
+      x-required-scopes:
+      - write_subscription_standalone_charges
+      responses:
+        '201':
+          description: Created. Inspect the resource status; HTTP 201 alone does not mean payment succeeded.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/StandaloneCharge"
+              example:
+                id: 601
+                contractId: 301
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                status: successful
+                amount: 5
+                currency: GBP
+                description: Additional charge
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/StandaloneChargeCreate"
+            example:
+              idempotencyKey: contract-301-extra-1
+              amount: 5
+              description: Additional charge
+  "/subscription/contracts/{contract_id}/standalone-charges/count":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    get:
+      operationId: countStandaloneCharges
+      summary: Count standalone charges
+      tags:
+      - Standalone charges
+      description: Requires the read_subscription_standalone_charges permission.
+      x-required-scopes:
+      - read_subscription_standalone_charges
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Count"
+              example:
+                count: 3
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/SinceId"
+  "/subscription/contracts/{contract_id}/standalone-charges/{id}":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    - "$ref": "#/components/parameters/id"
+    get:
+      operationId: getStandaloneCharge
+      summary: Get standalone charge
+      tags:
+      - Standalone charges
+      description: >-
+        Requires the read_subscription_standalone_charges permission. No PUT or DELETE route. No resource
+        version or idempotency-key lookup.
+      x-required-scopes:
+      - read_subscription_standalone_charges
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/StandaloneCharge"
+              example:
+                id: 601
+                contractId: 301
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                status: successful
+                amount: 5
+                currency: GBP
+                description: Additional charge
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - "$ref": "#/components/parameters/Fields"
+  "/subscription/contracts/{contract_id}/payment-method-update-sessions":
+    parameters:
+    - "$ref": "#/components/parameters/contract_id"
+    post:
+      operationId: createPaymentMethodUpdateSession
+      summary: Create a payment-method update link
+      tags:
+      - Payment methods
+      description: >-
+        Requires the write_subscription_contracts permission. Requires an editable contract with a supported
+        payment method and a business OAuth app. HTTP 200, not 201. No status-lookup GET exists. T13100
+        confirms success/failure is shown on the hosted page; successful saves emit subscription_contract.updated.
+      x-required-scopes:
+      - write_subscription_contracts
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/PaymentMethodUpdateSession"
+              example:
+                url: https://store.example.test/checkout/subscription-payment-method?token=example-token
+                expiresAt: Thu, 26 Nov 2026 12:05:00 +0000
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+  "/business":
+    get:
+      operationId: getSubscriptionBusinessSettings
+      summary: Read subscription settings
+      tags:
+      - Business settings
+      description: >-
+        Requires the read_business permission. Subscription-related subset of the ordinary business resource.
+        Include settings in embed.
+      x-required-scopes:
+      - read_business
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SubscriptionBusiness"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - name: embed
+        in: query
+        required: false
+        description: Include business settings.
+        schema:
+          type: string
+          enum:
+          - settings
+  "/business/features":
+    get:
+      operationId: getSubscriptionFeatures
+      summary: Read subscription feature states
+      tags:
+      - Business settings
+      description: >-
+        Requires the read_business_features permission. Without name returns available features. An unknown
+        feature name returns an empty array.
+      x-required-scopes:
+      - read_business_features
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/BusinessFeature"
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      parameters:
+      - name: name
+        in: query
+        required: false
+        description: Optional feature filter.
+        schema:
+          type: string
+          enum:
+          - new_subscription_system
+          - subscription_discount_stacking
+  "/business/features/change-status":
+    post:
+      operationId: changeSubscriptionFeature
+      summary: Change subscription feature state
+      tags:
+      - Business settings
+      description: >-
+        Requires the write_business_features permission. Uses the existing business feature endpoint.
+        new_subscription_system selects the new system for new subscriptions. subscription_discount_stacking
+        controls subscription discount stacking (T13192). No resource-version header.
+      x-required-scopes:
+      - write_business_features
+      responses:
+        '200':
+          description: Updated; the response is an empty JSON string.
+          content:
+            application/json:
+              schema:
+                type: string
+              example: ''
+        '401':
+          "$ref": "#/components/responses/Unauthorized"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '422':
+          "$ref": "#/components/responses/Invalid"
+        '429':
+          "$ref": "#/components/responses/Throttled"
+        '500':
+          "$ref": "#/components/responses/ServerError"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SubscriptionFeatureChange"
+            example:
+              name: new_subscription_system
+              status: true
+webhooks:
+  subscriptionEvent:
+    post:
+      operationId: receiveSubscriptionEvent
+      summary: Receive a subscription event
+      tags:
+      - Webhooks
+      description: >-
+        ShopWired POSTs to the HTTPS URL registered by the app. Register using the ordinary /webhooks
+        API with use_webhooks plus the relevant subscription read permission. Verify HMAC-SHA256 over
+        the exact raw body using the app signature secret. Acknowledge with HTTP 200 within five seconds
+        after durably recording the delivery. Delivery may be duplicated or out of order; deduplicate
+        by businessId plus event.id. A contract.updated event also covers payment-method changes; there
+        is no dedicated update-session status event. Ledger events have no corresponding public ledger
+        collection in this specification.
+      security:
+      - WebhookHmac: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SubscriptionEventEnvelope"
+            example:
+              timestamp: Thu, 26 Nov 2026 12:00:00 +0000
+              event:
+                id: 701
+                businessId: 801
+                createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                topic: subscription_plan.updated
+                subjectType: subscription_plan
+                subjectId: 101
+                data:
+                  object:
+                    id: 101
+                    version: 1
+                    createdAt: Thu, 26 Nov 2026 12:00:00 +0000
+                    enabled: false
+                    name: Monthly plan
+                    interval: month
+                    intervalCount: 1
+      responses:
+        '200':
+          description: Durably accepted, including an already recorded duplicate.
+        5XX:
+          description: Could not durably record the event; delivery has not been acknowledged.
+  webhookVerification:
+    post:
+      operationId: verifySubscriptionWebhookUrl
+      summary: Verify the registered webhook URL
+      tags:
+      - Webhooks
+      description: >-
+        Delivered to the same registered URL. Verify the raw-body signature, then return the hex HMAC-SHA256
+        of verificationToken using the app signature secret as plain text.
+      security:
+      - WebhookHmac: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/WebhookVerification"
+      responses:
+        '200':
+          description: Verification response.
+          content:
+            text/plain:
+              schema:
+                type: string
+                pattern: "^[a-fA-F0-9]{64}$"
+components:
+  securitySchemes:
+    OAuthBearer:
+      type: http
+      scheme: bearer
+      description: >-
+        ShopWired business OAuth access token, sent as Authorization: Bearer <token>. Subscription permissions
+        are OAuth-only; Basic authentication is not supported. Obtain the scopes listed by each operation.
+    WebhookHmac:
+      type: apiKey
+      in: header
+      name: X-ShopWired-Signature
+      description: >-
+        64 hexadecimal characters: HMAC-SHA256 of exact raw request bytes with the app signature secret.
+        Must be recomputed and securely compared; this is not a static API key.
+  parameters:
+    Version:
+      name: X-ShopWired-Resource-Version
+      in: header
+      required: true
+      description: Latest version from a GET of this exact resource. Missing/stale versions return 422,
+        not 409.
+      schema:
+        "$ref": "#/components/schemas/Id"
+    plan_id:
+      name: plan_id
+      in: path
+      required: true
+      description: ShopWired plan id.
+      schema:
+        "$ref": "#/components/schemas/Id"
+    contract_id:
+      name: contract_id
+      in: path
+      required: true
+      description: ShopWired contract id.
+      schema:
+        "$ref": "#/components/schemas/Id"
+    renewal_intent_id:
+      name: renewal_intent_id
+      in: path
+      required: true
+      description: ShopWired renewal intent id.
+      schema:
+        "$ref": "#/components/schemas/Id"
+    id:
+      name: id
+      in: path
+      required: true
+      description: ShopWired id.
+      schema:
+        "$ref": "#/components/schemas/Id"
+    Count:
+      name: count
+      in: query
+      required: false
+      description: Maximum records per page.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    Offset:
+      name: offset
+      in: query
+      required: false
+      description: Number of records to skip.
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Fields:
+      name: fields
+      in: query
+      required: false
+      description: Comma-separated response fields. Schema required properties describe an unprojected
+        response.
+      schema:
+        type: string
+    SinceId:
+      name: since_id
+      in: query
+      required: false
+      description: Only IDs greater than this value.
+      schema:
+        type: integer
+        minimum: 1
+    CreatedBefore:
+      name: created_before
+      in: query
+      required: false
+      description: >-
+        Creation timestamp filter in ISO 8601 with offset, for example 2026-11-26T12:00:00+00:00. URL-encode
+        the plus sign.
+      schema:
+        type: string
+        format: date-time
+    CreatedAfter:
+      name: created_after
+      in: query
+      required: false
+      description: >-
+        Creation timestamp filter in ISO 8601 with offset, for example 2026-11-26T12:00:00+00:00. URL-encode
+        the plus sign.
+      schema:
+        type: string
+        format: date-time
+    Sort:
+      name: sort
+      in: query
+      required: false
+      description: Creation-time ordering; omitted uses the Platform default.
+      schema:
+        type: string
+        enum:
+        - created
+        - created_asc
+        - created_desc
+    CompletedSort:
+      name: sort
+      in: query
+      required: false
+      description: Creation or completion ordering.
+      schema:
+        type: string
+        enum:
+        - created
+        - created_asc
+        - created_desc
+        - completed
+        - completed_asc
+        - completed_desc
+  responses:
+    Unauthorized:
+      description: Missing, expired or invalid OAuth access token.
+    Forbidden:
+      description: Required permission is missing or access to this business is forbidden.
+    NotFound:
+      description: Resource or parent not found in the authenticated business.
+    Invalid:
+      description: Invalid field, duplicate key, invalid state, locked contract or stale/missing resource
+        version.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/ApiError"
+          example:
+            code: 10
+            message: Invalid operation
+    Throttled:
+      description: Rate limit exceeded. The response may have no JSON body. Retry reads with bounded backoff.
+    ServerError:
+      description: Server error. A mutation may already have taken effect; reconcile its outcome before
+        retrying.
+  schemas:
+    Id:
+      type: integer
+      description: Positive ShopWired resource identifier or version.
+      minimum: 1
+    Timestamp:
+      type: string
+      description: RFC 1123 date, with explicit timezone offset; not an ISO 8601 date-time.
+      example: Thu, 26 Nov 2026 12:00:00 +0000
+    Money:
+      type: number
+      description: Amount in major currency units, not pence/cents. Currency comes from the contract.
+      minimum: 0
+    Interval:
+      type: string
+      description: Use day with intervalCount 7 for weekly billing.
+      enum:
+      - day
+      - month
+      - year
+    ContractStatus:
+      type: string
+      enum:
+      - pending
+      - active
+      - paused
+      - cancelled
+    ContractItemStatus:
+      type: string
+      enum:
+      - active
+      - paused
+      - cancelled
+    RenewalIntentStatus:
+      type: string
+      enum:
+      - pending
+      - in_progress
+      - awaiting_order
+      - successful
+      - failed
+    BillingAttemptStatus:
+      type: string
+      enum:
+      - pending
+      - requires_capture
+      - requires_customer_action
+      - successful
+      - failed
+    ChargeStatus:
+      type: string
+      enum:
+      - pending
+      - successful
+      - failed
+    Count:
+      type: object
+      required:
+      - count
+      properties:
+        count:
+          type: integer
+          minimum: 0
+    ApiError:
+      type: object
+      description: >-
+        ShopWired validation/operation error. Infrastructure and authentication errors may have another
+        body or no body.
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+    IdempotencyKey:
+      type: string
+      description: >-
+        Required caller-generated key, unique per business and resource family. Reuse is rejected; it
+        does not replay the original response. Not returned on resource reads. Maximum 64 UTF-8 bytes;
+        maxLength alone does not enforce the byte limit.
+      minLength: 1
+      maxLength: 64
+    FailResource:
+      type: object
+      additionalProperties: false
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          description: Only failed is available as an external status transition.
+          enum:
+          - failed
+        failureReason:
+          type: string
+          description: >-
+            Optional nonempty reason; omitted defaults to an empty reason. Maximum 100 UTF-8 bytes; maxLength
+            alone does not enforce the byte limit.
+          minLength: 1
+          maxLength: 100
+    PlanWrite:
+      type: object
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+          description: Defaults to false on creation.
+        name:
+          type: string
+          description: Trimmed plan name. Maximum 100 UTF-8 bytes; maxLength alone does not enforce the
+            byte limit.
+          minLength: 1
+          maxLength: 100
+        interval:
+          "$ref": "#/components/schemas/Interval"
+        intervalCount:
+          type: integer
+          description: Defaults to 1 on creation.
+          minimum: 1
+          maximum: 9999
+        cycleLimit:
+          type: integer
+          description: Zero means no cycle limit; defaults to zero.
+          minimum: 0
+          maximum: 9999
+        trialDays:
+          type: integer
+          description: Free-trial duration in days; zero means no trial.
+          minimum: 0
+          maximum: 999
+        priceModifierType:
+          type: string
+          description: Defaults to none. When explicitly set to a non-none value, priceModifierValue is
+            required.
+          enum:
+          - none
+          - fixed_price
+          - percent_discount
+        priceModifierValue:
+          type: number
+          description: >-
+            Required with an explicit non-none modifier. Positive; percent_discount maximum 100; fixed_price
+            maximum 9999999999. Rounded to four decimal places. Fixed-price values exclude VAT.
+          exclusiveMinimum: 0
+          maximum: 9999999999
+      allOf:
+      - if:
+          properties:
+            priceModifierType:
+              const: percent_discount
+          required:
+          - priceModifierType
+        then:
+          required:
+          - priceModifierValue
+          properties:
+            priceModifierValue:
+              maximum: 100
+      - if:
+          properties:
+            priceModifierType:
+              const: fixed_price
+          required:
+          - priceModifierType
+        then:
+          required:
+          - priceModifierValue
+    PlanCreate:
+      allOf:
+      - "$ref": "#/components/schemas/PlanWrite"
+      - required:
+        - name
+        - interval
+      description: Create a plan. Supply priceModifierValue when selecting fixed_price or percent_discount.
+    Plan:
+      type: object
+      description: >-
+        Null optional properties are omitted. With fields projection, only requested properties are returned.
+      required:
+      - id
+      - version
+      - enabled
+      - name
+      - interval
+      - intervalCount
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        createdAt:
+          "$ref": "#/components/schemas/Timestamp"
+        version:
+          "$ref": "#/components/schemas/Id"
+        enabled:
+          type: boolean
+        name:
+          type: string
+          description: Trimmed plan name. Maximum 100 UTF-8 bytes; maxLength alone does not enforce the
+            byte limit.
+          minLength: 1
+          maxLength: 100
+        interval:
+          "$ref": "#/components/schemas/Interval"
+        intervalCount:
+          type: integer
+          minimum: 1
+          maximum: 9999
+        cycleLimit:
+          type: integer
+          minimum: 0
+          maximum: 9999
+        trialDays:
+          type: integer
+          minimum: 0
+          maximum: 999
+        priceModifierType:
+          type: string
+          enum:
+          - none
+          - fixed_price
+          - percent_discount
+        priceModifierValue:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 9999999999
+        items:
+          type: array
+          description: Included with embed=items; limited to 100 embedded items. Use the items collection
+            to paginate.
+          items:
+            "$ref": "#/components/schemas/PlanItem"
+    PlanItemCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - productId
+      - sku
+      properties:
+        productId:
+          "$ref": "#/components/schemas/Id"
+        sku:
+          type: string
+          description: >-
+            Nonempty product/variation SKU. Product must exist in this business; the product/SKU link
+            must be unique within the plan. Maximum 128 UTF-8 bytes; maxLength alone does not enforce
+            the byte limit.
+          minLength: 1
+          maxLength: 128
+    PlanItem:
+      type: object
+      description: >-
+        Null optional properties are omitted. With fields projection, only requested properties are returned.
+      required:
+      - id
+      - planId
+      - productId
+      - sku
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        planId:
+          "$ref": "#/components/schemas/Id"
+        productId:
+          "$ref": "#/components/schemas/Id"
+        sku:
+          type: string
+    CustomerDetails:
+      type: object
+      description: >-
+        Stored contract address. Empty strings can occur in existing records. Field names differ from
+        the ordinary order API.
+      properties:
+        name:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        companyName:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        emailAddress:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        phoneNumber:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        addressLine1:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        addressLine2:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        addressLine3:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        city:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        province:
+          type: string
+          description: Maximum 100 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 100
+        postalCode:
+          type: string
+          description: Maximum 32 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 32
+        countryId:
+          "$ref": "#/components/schemas/Id"
+    CustomerDetailsWrite:
+      type: object
+      description: >-
+        Replaces the complete address object. Omitted string fields become empty strings. countryId must
+        identify an existing country.
+      additionalProperties: false
+      required:
+      - name
+      - emailAddress
+      - countryId
+      properties:
+        name:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 1
+          maxLength: 128
+        companyName:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        emailAddress:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 1
+          maxLength: 128
+          format: email
+        phoneNumber:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        addressLine1:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        addressLine2:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        addressLine3:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        city:
+          type: string
+          description: Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 128
+        province:
+          type: string
+          description: Maximum 100 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 100
+        postalCode:
+          type: string
+          description: Maximum 32 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 0
+          maxLength: 32
+        countryId:
+          "$ref": "#/components/schemas/Id"
+    PlanSnapshot:
+      type: object
+      description: Plan snapshot taken when the contract was created; later plan changes do not rewrite
+        it.
+      required:
+      - id
+      - version
+      - name
+      - interval
+      - intervalCount
+      - cycleLimit
+      - trialDays
+      properties:
+        id:
+          type: integer
+          minimum: 0
+        version:
+          type: integer
+          minimum: 0
+        name:
+          type: string
+        interval:
+          "$ref": "#/components/schemas/Interval"
+        intervalCount:
+          type: integer
+          minimum: 1
+        cycleLimit:
+          type: integer
+          minimum: 0
+        trialDays:
+          type: integer
+          minimum: 0
+        priceModifierType:
+          type: string
+          enum:
+          - fixed_price
+          - percent_discount
+        priceModifierValue:
+          "$ref": "#/components/schemas/Money"
+    ContractUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          description: >-
+            Pending/paused may become active or cancelled; active may become paused or cancelled. Cancelled
+            is terminal.
+          enum:
+          - active
+          - paused
+          - cancelled
+        cancellationReason:
+          type: string
+          description: >-
+            Read only when status is supplied; records the reason when cancelling. Maximum 100 UTF-8 bytes;
+            maxLength alone does not enforce the byte limit.
+          minLength: 1
+          maxLength: 100
+        cycleLimit:
+          type: integer
+          description: Zero means unlimited.
+          minimum: 0
+          maximum: 9999
+        trialEndsAt:
+          type: string
+          description: RFC 1123 timestamp, or an empty string to remove the trial end. Do not send JSON
+            null to clear it.
+          maxLength: 50
+        billingCustomerDetails:
+          "$ref": "#/components/schemas/CustomerDetailsWrite"
+        shippingCustomerDetails:
+          "$ref": "#/components/schemas/CustomerDetailsWrite"
+    Contract:
+      type: object
+      description: >-
+        Null optional properties are omitted. With fields projection, only requested properties are returned.
+      required:
+      - id
+      - version
+      - customerId
+      - status
+      - interval
+      - intervalCount
+      - currency
+      - initialOrderId
+      - planDetails
+      - editable
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        createdAt:
+          "$ref": "#/components/schemas/Timestamp"
+        version:
+          "$ref": "#/components/schemas/Id"
+        customerId:
+          type: integer
+          description: Customer ID as stored by Platform.
+          minimum: 0
+        status:
+          "$ref": "#/components/schemas/ContractStatus"
+        interval:
+          "$ref": "#/components/schemas/Interval"
+        intervalCount:
+          type: integer
+          minimum: 1
+        cycleLimit:
+          type: integer
+          minimum: 1
+        trialEndsAt:
+          "$ref": "#/components/schemas/Timestamp"
+        cancelledAt:
+          "$ref": "#/components/schemas/Timestamp"
+        cancellationReason:
+          type: string
+        currency:
+          type: string
+          example: GBP
+        initialOrderId:
+          "$ref": "#/components/schemas/Id"
+        paymentMethod:
+          type: string
+          description: Payment method type, for example stripe, shopwired_payments or offline; no card
+            details.
+        planDetails:
+          "$ref": "#/components/schemas/PlanSnapshot"
+        billingCustomerDetails:
+          "$ref": "#/components/schemas/CustomerDetails"
+        shippingCustomerDetails:
+          "$ref": "#/components/schemas/CustomerDetails"
+        editable:
+          type: boolean
+          description: Current Platform editability indicator. Re-read after changes or conflicts.
+        items:
+          type: array
+          description: Included with embed=items. Add item_availability to embed availability on each
+            item.
+          items:
+            "$ref": "#/components/schemas/ContractItem"
+    Availability:
+      type: object
+      required:
+      - productExists
+      - skuExists
+      - stock
+      properties:
+        productExists:
+          type: boolean
+        skuExists:
+          type: boolean
+        stock:
+          type: integer
+    ContractItemUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          "$ref": "#/components/schemas/ContractItemStatus"
+        price:
+          type: number
+          description: Unit price excluding VAT, in major currency units.
+          minimum: 0
+        valueAddedTaxRate:
+          type: number
+          description: VAT percentage.
+          minimum: 0
+          maximum: 100
+        quantity:
+          type: integer
+          description: Defaults to 1 on creation.
+          minimum: 1
+          maximum: 99999
+    ContractItemCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - productId
+      - sku
+      - price
+      - valueAddedTaxRate
+      properties:
+        status:
+          type: string
+          description: Defaults to active.
+          enum:
+          - active
+          - paused
+        price:
+          type: number
+          description: Unit price excluding VAT, in major currency units.
+          minimum: 0
+        valueAddedTaxRate:
+          type: number
+          description: VAT percentage.
+          minimum: 0
+          maximum: 100
+        quantity:
+          type: integer
+          description: Defaults to 1 on creation.
+          minimum: 1
+          maximum: 99999
+        productId:
+          "$ref": "#/components/schemas/Id"
+        sku:
+          type: string
+          description: Nonempty SKU. Maximum 128 UTF-8 bytes; maxLength alone does not enforce the byte
+            limit.
+          minLength: 1
+          maxLength: 128
+        variation:
+          type: boolean
+          description: >-
+            Whether the SKU identifies a variation. Request property is variation; response property is
+            isVariation.
+        comments:
+          type: string
+          description: >-
+            Stored in productDetails.comments. Maximum 2000 UTF-8 bytes; maxLength alone does not enforce
+            the byte limit.
+          minLength: 0
+          maxLength: 2000
+    ProductDetails:
+      type: object
+      description: Snapshot of product selections. Selection element shapes belong to the ordinary product/order
+        API.
+      properties:
+        name:
+          type: string
+        comments:
+          type: string
+        extras:
+          type: array
+          items: {}
+        options:
+          type: array
+          items: {}
+        choices:
+          type: array
+          items: {}
+    ContractItem:
+      type: object
+      description: >-
+        Null optional properties are omitted. With fields projection, only requested properties are returned.
+      required:
+      - id
+      - version
+      - contractId
+      - status
+      - productId
+      - sku
+      - isVariation
+      - price
+      - valueAddedTaxRate
+      - quantity
+      - originalPrice
+      - originalValueAddedTaxRate
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        createdAt:
+          "$ref": "#/components/schemas/Timestamp"
+        version:
+          "$ref": "#/components/schemas/Id"
+        status:
+          "$ref": "#/components/schemas/ContractItemStatus"
+        price:
+          type: number
+          description: Unit price excluding VAT, in major currency units.
+          minimum: 0
+        valueAddedTaxRate:
+          type: number
+          description: VAT percentage.
+          minimum: 0
+          maximum: 100
+        quantity:
+          type: integer
+          description: Defaults to 1 on creation.
+          minimum: 1
+          maximum: 99999
+        contractId:
+          "$ref": "#/components/schemas/Id"
+        productId:
+          "$ref": "#/components/schemas/Id"
+        sku:
+          type: string
+        isVariation:
+          type: boolean
+        originalPrice:
+          "$ref": "#/components/schemas/Money"
+        originalValueAddedTaxRate:
+          type: number
+          minimum: 0
+          maximum: 100
+        productDetails:
+          "$ref": "#/components/schemas/ProductDetails"
+        availability:
+          "$ref": "#/components/schemas/Availability"
+    RenewalIntentCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - contractVersion
+      - idempotencyKey
+      - amount
+      properties:
+        contractVersion:
+          "$ref": "#/components/schemas/Id"
+        idempotencyKey:
+          "$ref": "#/components/schemas/IdempotencyKey"
+        amount:
+          type: number
+          description: Positive amount to collect in the contract currency, in major units.
+          exclusiveMinimum: 0
+    RenewalIntent:
+      type: object
+      description: >-
+        Null optional properties are omitted. With fields projection, only requested properties are returned.
+      required:
+      - id
+      - contractId
+      - status
+      - amount
+      - currency
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        createdAt:
+          "$ref": "#/components/schemas/Timestamp"
+        contractId:
+          "$ref": "#/components/schemas/Id"
+        status:
+          "$ref": "#/components/schemas/RenewalIntentStatus"
+        completedAt:
+          "$ref": "#/components/schemas/Timestamp"
+        amount:
+          "$ref": "#/components/schemas/Money"
+        currency:
+          type: string
+          example: GBP
+        finalBillingAttemptId:
+          "$ref": "#/components/schemas/Id"
+        orderId:
+          "$ref": "#/components/schemas/Id"
+        failureReason:
+          type: string
+    BillingAttemptCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - idempotencyKey
+      properties:
+        idempotencyKey:
+          "$ref": "#/components/schemas/IdempotencyKey"
+    BillingAttempt:
+      type: object
+      description: >-
+        Null optional properties are omitted. With fields projection, only requested properties are returned.
+      required:
+      - id
+      - renewalIntentId
+      - status
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        createdAt:
+          "$ref": "#/components/schemas/Timestamp"
+        renewalIntentId:
+          "$ref": "#/components/schemas/Id"
+        status:
+          "$ref": "#/components/schemas/BillingAttemptStatus"
+        completedAt:
+          "$ref": "#/components/schemas/Timestamp"
+        paymentMethod:
+          type: string
+          description: Payment method type; no card details.
+        failureReason:
+          type: string
+        errorCode:
+          type: string
+        errorDescription:
+          type: string
+    StandaloneChargeCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - idempotencyKey
+      - amount
+      - description
+      properties:
+        idempotencyKey:
+          "$ref": "#/components/schemas/IdempotencyKey"
+        amount:
+          type: number
+          description: Positive major-unit amount in the contract currency.
+          exclusiveMinimum: 0
+        description:
+          type: string
+          description: Maximum 1000 UTF-8 bytes; maxLength alone does not enforce the byte limit.
+          minLength: 1
+          maxLength: 1000
+    StandaloneCharge:
+      type: object
+      description: >-
+        Null optional properties are omitted. With fields projection, only requested properties are returned.
+      required:
+      - id
+      - contractId
+      - status
+      - amount
+      - currency
+      - description
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        createdAt:
+          "$ref": "#/components/schemas/Timestamp"
+        contractId:
+          "$ref": "#/components/schemas/Id"
+        status:
+          "$ref": "#/components/schemas/ChargeStatus"
+        amount:
+          "$ref": "#/components/schemas/Money"
+        currency:
+          type: string
+          example: GBP
+        description:
+          type: string
+        paymentMethod:
+          type: string
+        failureReason:
+          type: string
+    PaymentMethodUpdateSession:
+      type: object
+      description: >-
+        Single-use redirect token, expires after five minutes. No session ID or status lookup. Hosted
+        page shows success/failure; a saved method emits subscription_contract.updated.
+      required:
+      - url
+      - expiresAt
+      properties:
+        url:
+          type: string
+          description: Open the Platform-hosted page to update the saved method.
+          format: uri
+        expiresAt:
+          "$ref": "#/components/schemas/Timestamp"
+    BusinessFeature:
+      type: object
+      required:
+      - name
+      - enabled
+      properties:
+        name:
+          type: string
+        enabled:
+          type: boolean
+    SubscriptionFeatureChange:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - status
+      properties:
+        name:
+          type: string
+          enum:
+          - new_subscription_system
+          - subscription_discount_stacking
+        status:
+          type: boolean
+    SubscriptionBusiness:
+      type: object
+      description: >-
+        Subscription-related fields of the ordinary business resource; other business fields may also
+        be present.
+      required:
+      - id
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        settings:
+          type: object
+          properties:
+            subscriptionSystemVersion:
+              type: integer
+              description: Version 2 identifies the new system. Older implementations omit the property
+                for version 1.
+            subscriptionDiscountStacking:
+              type: boolean
+              description: Whether subscription discounts may stack; returned with embed=settings.
+    RenewalOrderSubscriptionFields:
+      type: object
+      description: >-
+        Supplement to the ordinary POST /orders body, not a complete order request. Keep these request
+        fields after T13192; add ordinary products, addresses and shipping fields. Product lines belonging
+        to the subscription use subscriptionPlanItem. Platform does not guarantee equality between the
+        intent amount and final order total.
+      required:
+      - subscriptionContractId
+      - subscriptionContractVersion
+      - subscriptionRenewalIntentId
+      - subscriptionBillingAttemptId
+      properties:
+        subscriptionContractId:
+          "$ref": "#/components/schemas/Id"
+        subscriptionContractVersion:
+          "$ref": "#/components/schemas/Id"
+        subscriptionRenewalIntentId:
+          "$ref": "#/components/schemas/Id"
+        subscriptionBillingAttemptId:
+          "$ref": "#/components/schemas/Id"
+    SubscriptionOrderReadFields:
+      type: object
+      description: >-
+        Supplement to ordinary order responses. T13192 replaces the read-side subscriptionContractId with
+        hasSubscriptionContracts. For identity use contract.initialOrderId or renewalIntent.contractId/orderId.
+      required:
+      - id
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        hasSubscriptionContracts:
+          type: boolean
+    SubscriptionEvent:
+      type: object
+      required:
+      - id
+      - businessId
+      - topic
+      - subjectType
+      - subjectId
+      - data
+      properties:
+        id:
+          "$ref": "#/components/schemas/Id"
+        businessId:
+          "$ref": "#/components/schemas/Id"
+        createdAt:
+          "$ref": "#/components/schemas/Timestamp"
+        topic:
+          type: string
+          enum:
+          - subscription_plan.created
+          - subscription_plan.updated
+          - subscription_plan.deleted
+          - subscription_plan_item.created
+          - subscription_plan_item.deleted
+          - subscription_contract.created
+          - subscription_contract.updated
+          - subscription_contract.deleted
+          - subscription_contract_item.created
+          - subscription_contract_item.updated
+          - subscription_contract_item.deleted
+          - subscription_renewal_intent.created
+          - subscription_renewal_intent.updated
+          - subscription_renewal_intent.deleted
+          - subscription_billing_attempt.created
+          - subscription_billing_attempt.updated
+          - subscription_billing_attempt.deleted
+          - subscription_billing_attempt.error
+          - subscription_ledger_entry.created
+          - subscription_standalone_charge.created
+        subjectType:
+          type: string
+          enum:
+          - subscription_plan
+          - subscription_plan_item
+          - subscription_contract
+          - subscription_contract_item
+          - subscription_renewal_intent
+          - subscription_billing_attempt
+          - subscription_ledger_entry
+          - subscription_standalone_charge
+        subjectId:
+          "$ref": "#/components/schemas/Id"
+        data:
+          type: object
+          description: Event data; do not assume every event is a full current resource.
+          properties:
+            object:
+              type: object
+              description: >-
+                Topic-specific resource snapshot. Deletion/error payloads can differ from a fresh GET.
+                Refresh the corresponding resource when present.
+              properties: {}
+    SubscriptionEventEnvelope:
+      type: object
+      required:
+      - timestamp
+      - event
+      properties:
+        timestamp:
+          "$ref": "#/components/schemas/Timestamp"
+        event:
+          "$ref": "#/components/schemas/SubscriptionEvent"
+    WebhookVerification:
+      type: object
+      required:
+      - timestamp
+      - verificationToken
+      properties:
+        timestamp:
+          "$ref": "#/components/schemas/Timestamp"
+        verificationToken:
+          type: string
